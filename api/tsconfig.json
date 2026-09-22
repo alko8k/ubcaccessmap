@@ -11,5 +11,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["index.ts", "../apps/api/src/types"]
+  "include": ["*.ts", "../apps/api/src/types"]
 }

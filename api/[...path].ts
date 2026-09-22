@@ -6,8 +6,12 @@ import { prisma } from "../apps/api/src/prisma.ts";
 /*
  * Serverless entry point.
  *
- * Vercel routes every /api/* request here and invokes the exported Express app
- * as the handler. Unlike src/server.ts there is no listen() call and no
+ * The [...path] filename is Vercel's catch-all convention: it matches every
+ * /api/* path at any depth and invokes the exported Express app as the
+ * handler, leaving req.url as the original path. That matters because the
+ * routers declare full paths (router.get("/api/health", ...)), so Express must
+ * see /api/health rather than a rewritten stub. A plain index.ts would map to
+ * the single URL /api and every other route would 404 at the edge. Unlike src/server.ts there is no listen() call and no
  * dotenv import: the platform injects environment variables directly, and the
  * runtime owns the socket.
  *
