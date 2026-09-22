@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregateScores, bayesianScore, weightedRawScore } from "./ranking.ts";
+import { aggregateScores, bayesianScore, weightedRawScore } from "./ranking.js";
 
 const perfect = {
   cleanliness: 5,

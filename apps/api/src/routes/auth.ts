@@ -1,11 +1,11 @@
 import { Router } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { requestMagicLinkSchema, verifyMagicLinkSchema } from "@ubc-access-map/shared";
-import { adminEmails, type Env } from "../env.ts";
-import type { EmailAdapter } from "../email/adapter.ts";
-import { displayNameFromEmail, emailDomain, hashSecret, randomToken } from "../auth/crypto.ts";
-import { badRequest, unauthorized } from "../errors.ts";
-import { createRateLimiter } from "../middleware/rateLimit.ts";
+import { adminEmails, type Env } from "../env.js";
+import type { EmailAdapter } from "../email/adapter.js";
+import { displayNameFromEmail, emailDomain, hashSecret, randomToken } from "../auth/crypto.js";
+import { badRequest, unauthorized } from "../errors.js";
+import { createRateLimiter } from "../middleware/rateLimit.js";
 
 const MAGIC_LINK_TTL_MS = 15 * 60 * 1000;
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;

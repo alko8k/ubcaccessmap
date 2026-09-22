@@ -1,11 +1,11 @@
 import { Router } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { upsertRatingSchema } from "@ubc-access-map/shared";
-import { badRequest, notFound } from "../errors.ts";
-import { refreshWashroomRank } from "../lib/refreshRank.ts";
-import { toWashroomDetail } from "../lib/serialize.ts";
-import { requireUser } from "../middleware/session.ts";
-import { routeId } from "../lib/routeId.ts";
+import { badRequest, notFound } from "../errors.js";
+import { refreshWashroomRank } from "../lib/refreshRank.js";
+import { toWashroomDetail } from "../lib/serialize.js";
+import { requireUser } from "../middleware/session.js";
+import { routeId } from "../lib/routeId.js";
 
 const washroomInclude = {
   building: true,

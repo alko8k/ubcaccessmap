@@ -1,4 +1,4 @@
-import { tooManyRequests } from "../errors.ts";
+import { tooManyRequests } from "../errors.js";
 
 type Bucket = {
   count: number;

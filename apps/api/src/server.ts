@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { createApp } from "./app.ts";
-import { createEmailAdapter } from "./email/factory.ts";
-import { loadEnv } from "./env.ts";
-import { prisma } from "./prisma.ts";
+import { createApp } from "./app.js";
+import { createEmailAdapter } from "./email/factory.js";
+import { loadEnv } from "./env.js";
+import { prisma } from "./prisma.js";
 
 const env = loadEnv();
 

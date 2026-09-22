@@ -1,8 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
-import type { Env } from "../env.ts";
-import { hashSecret } from "../auth/crypto.ts";
-import { forbidden, unauthorized } from "../errors.ts";
+import type { Env } from "../env.js";
+import { hashSecret } from "../auth/crypto.js";
+import { forbidden, unauthorized } from "../errors.js";
 
 export function sessionMiddleware(prisma: PrismaClient, env: Env) {
   return async (request: Request, _response: Response, next: NextFunction) => {

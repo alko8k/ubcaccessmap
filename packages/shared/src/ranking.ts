@@ -1,4 +1,4 @@
-import { RANK_LETTERS } from "./constants.ts";
+import { RANK_LETTERS } from "./constants.js";
 
 export type ScoreInput = {
   cleanliness: number;

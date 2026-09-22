@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaClient, type FactState, type GenderType, type Prisma } from "@prisma/client";
 import { ACCESSIBILITY_KEYS, BUILDING_SOURCE_URL } from "@ubc-access-map/shared";
-import { centroidOfGeometry, rectangleFootprint } from "../src/lib/geo.ts";
+import { centroidOfGeometry, rectangleFootprint } from "../src/lib/geo.js";
 
 const prisma = new PrismaClient();
 

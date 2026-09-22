@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import type { EmailAdapter, MagicLinkEmail } from "./adapter.ts";
+import type { EmailAdapter, MagicLinkEmail } from "./adapter.js";
 
 type SmtpOptions = {
   host: string;

@@ -5,7 +5,7 @@ import {
   GENDER_TYPES,
   RANK_LETTERS,
   RATING_TAGS,
-} from "./constants.ts";
+} from "./constants.js";
 
 export const factStateSchema = z.enum(["yes", "no", "unknown"]);
 export const genderTypeSchema = z.enum(GENDER_TYPES);

@@ -1,8 +1,8 @@
 import { Router } from "express";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { boundsQuerySchema, type BuildingSummary } from "@ubc-access-map/shared";
-import { badRequest } from "../errors.ts";
-import { toWashroomSummary } from "../lib/serialize.ts";
+import { badRequest } from "../errors.js";
+import { toWashroomSummary } from "../lib/serialize.js";
 
 const washroomInclude = {
   building: true,

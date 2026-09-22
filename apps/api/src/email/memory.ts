@@ -1,4 +1,4 @@
-import type { EmailAdapter, MagicLinkEmail } from "./adapter.ts";
+import type { EmailAdapter, MagicLinkEmail } from "./adapter.js";
 
 export function createMemoryEmailAdapter(): EmailAdapter {
   const latest = new Map<string, string>();

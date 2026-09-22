@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isAllowedUbcEmail } from "./domains.ts";
+import { isAllowedUbcEmail } from "./domains.js";
 
 describe("isAllowedUbcEmail", () => {
   it("accepts student and staff UBC domains", () => {

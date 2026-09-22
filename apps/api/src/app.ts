@@ -2,15 +2,15 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
 import type { PrismaClient } from "@prisma/client";
-import type { Env } from "./env.ts";
-import type { EmailAdapter } from "./email/adapter.ts";
-import { errorHandler } from "./middleware/errorHandler.ts";
-import { sessionMiddleware } from "./middleware/session.ts";
-import { authRouter } from "./routes/auth.ts";
-import { healthRouter } from "./routes/health.ts";
-import { mapRouter } from "./routes/map.ts";
-import { reportRouter } from "./routes/reports.ts";
-import { washroomRouter } from "./routes/washrooms.ts";
+import type { Env } from "./env.js";
+import type { EmailAdapter } from "./email/adapter.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import { sessionMiddleware } from "./middleware/session.js";
+import { authRouter } from "./routes/auth.js";
+import { healthRouter } from "./routes/health.js";
+import { mapRouter } from "./routes/map.js";
+import { reportRouter } from "./routes/reports.js";
+import { washroomRouter } from "./routes/washrooms.js";
 
 export type AppDeps = {
   prisma: PrismaClient;

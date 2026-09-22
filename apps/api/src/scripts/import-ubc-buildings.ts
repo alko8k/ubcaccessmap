@@ -1,9 +1,9 @@
 import "dotenv/config";
 import type { Prisma } from "@prisma/client";
 import { BUILDING_SOURCE_URL } from "@ubc-access-map/shared";
-import { loadEnv } from "../env.ts";
-import { centroidOfGeometry } from "../lib/geo.ts";
-import { prisma } from "../prisma.ts";
+import { loadEnv } from "../env.js";
+import { centroidOfGeometry } from "../lib/geo.js";
+import { prisma } from "../prisma.js";
 
 type BuildingFeature = {
   type: "Feature";

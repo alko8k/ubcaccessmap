@@ -1,3 +1,3 @@
-export * from "./constants.ts";
-export * from "./ranking.ts";
-export * from "./schemas.ts";
+export * from "./constants.js";
+export * from "./ranking.js";
+export * from "./schemas.js";

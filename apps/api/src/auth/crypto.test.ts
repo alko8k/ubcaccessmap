@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayNameFromEmail, hashSecret, randomToken, secretsEqual } from "./crypto.ts";
+import { displayNameFromEmail, hashSecret, randomToken, secretsEqual } from "./crypto.js";
 
 describe("auth crypto", () => {
   it("creates unique URL-safe tokens", () => {

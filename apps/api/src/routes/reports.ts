@@ -1,9 +1,9 @@
 import { Router } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { createReportSchema, updateReportSchema } from "@ubc-access-map/shared";
-import { badRequest, notFound } from "../errors.ts";
-import { requireAdmin, requireUser } from "../middleware/session.ts";
-import { routeId } from "../lib/routeId.ts";
+import { badRequest, notFound } from "../errors.js";
+import { requireAdmin, requireUser } from "../middleware/session.js";
+import { routeId } from "../lib/routeId.js";
 
 export function reportRouter(prisma: PrismaClient) {
   const router = Router();

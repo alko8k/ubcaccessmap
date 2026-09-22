@@ -1,7 +1,7 @@
-import type { Env } from "../env.ts";
-import type { EmailAdapter } from "./adapter.ts";
-import { createMemoryEmailAdapter } from "./memory.ts";
-import { createSmtpEmailAdapter } from "./smtp.ts";
+import type { Env } from "../env.js";
+import type { EmailAdapter } from "./adapter.js";
+import { createMemoryEmailAdapter } from "./memory.js";
+import { createSmtpEmailAdapter } from "./smtp.js";
 
 /**
  * Picks the email adapter for the current environment.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adminEmails, loadEnv } from "./env.ts";
+import { adminEmails, loadEnv } from "./env.js";
 
 describe("loadEnv", () => {
   it("requires a database URL and session secret", () => {

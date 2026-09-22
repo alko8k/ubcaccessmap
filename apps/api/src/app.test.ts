@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
-import { createApp } from "./app.ts";
-import { createMemoryEmailAdapter } from "./email/memory.ts";
-import type { Env } from "./env.ts";
+import { createApp } from "./app.js";
+import { createMemoryEmailAdapter } from "./email/memory.js";
+import type { Env } from "./env.js";
 
 const env: Env = {
   NODE_ENV: "test",

@@ -1,7 +1,7 @@
-import { createApp } from "../apps/api/src/app.ts";
-import { createEmailAdapter } from "../apps/api/src/email/factory.ts";
-import { loadEnv } from "../apps/api/src/env.ts";
-import { prisma } from "../apps/api/src/prisma.ts";
+import { createApp } from "../apps/api/src/app.js";
+import { createEmailAdapter } from "../apps/api/src/email/factory.js";
+import { loadEnv } from "../apps/api/src/env.js";
+import { prisma } from "../apps/api/src/prisma.js";
 
 /*
  * Serverless entry point.
