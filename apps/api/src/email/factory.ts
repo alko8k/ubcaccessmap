@@ -33,3 +33,26 @@ export function createEmailAdapter(env: Env): EmailAdapter {
     from: env.SMTP_FROM ?? `UBC Access Map <${env.SMTP_USER}>`,
   });
 }
+
+/**
+ * Defers adapter construction until the first send.
+ *
+ * The serverless entry builds its dependencies at module scope, so an eager
+ * createEmailAdapter throws during cold start and takes the whole function
+ * down with it — including /api/map, /api/search and /api/health, which are
+ * public, read-only, and have nothing to do with email. Deferring keeps those
+ * serving while an unconfigured SMTP setup still fails loudly, on the sign-in
+ * request that actually needs it.
+ *
+ * The long-running server keeps the eager check: there, failing at boot is the
+ * right behaviour, because a process that starts is assumed to be healthy.
+ */
+export function createLazyEmailAdapter(env: Env): EmailAdapter {
+  let adapter: EmailAdapter | undefined;
+  const resolve = () => (adapter ??= createEmailAdapter(env));
+
+  return {
+    sendMagicLink: (message) => resolve().sendMagicLink(message),
+    getLatestMagicLink: (to) => resolve().getLatestMagicLink?.(to),
+  };
+}

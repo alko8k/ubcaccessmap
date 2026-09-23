@@ -1,5 +1,5 @@
 import { createApp } from "../apps/api/src/app.js";
-import { createEmailAdapter } from "../apps/api/src/email/factory.js";
+import { createLazyEmailAdapter } from "../apps/api/src/email/factory.js";
 import { loadEnv } from "../apps/api/src/env.js";
 import { prisma } from "../apps/api/src/prisma.js";
 
@@ -20,8 +20,21 @@ import { prisma } from "../apps/api/src/prisma.js";
  */
 const env = loadEnv();
 
+/*
+ * The email adapter is built lazily. Constructing it here would throw on cold
+ * start whenever SMTP is unconfigured in production, which would take down the
+ * public read-only routes (/api/map, /api/search, /api/health) along with
+ * sign-in. Sign-in still fails loudly on the request that needs email; a
+ * warning here keeps the misconfiguration from being silent.
+ */
+if (env.NODE_ENV === "production" && (!env.SMTP_USER || !env.SMTP_PASS)) {
+  console.warn(
+    "[email] SMTP is not configured. Read-only routes will serve normally; sign-in will fail until SMTP_USER and SMTP_PASS are set.",
+  );
+}
+
 export default createApp({
   prisma,
-  email: createEmailAdapter(env),
+  email: createLazyEmailAdapter(env),
   env,
 });
