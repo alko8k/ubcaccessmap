@@ -1,6 +1,7 @@
 {
   "name": "ubc-access-map",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
