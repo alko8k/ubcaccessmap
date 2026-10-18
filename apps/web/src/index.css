@@ -1672,6 +1672,61 @@ textarea {
   color: var(--ink-2);
 }
 
+/* The 3D toggle sits in the control stack, styled like its neighbours. */
+.map-3d-toggle {
+  display: grid !important;
+  place-items: center;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.map-3d-toggle[aria-pressed="true"] {
+  background: var(--accent) !important;
+  color: var(--on-accent);
+}
+
+/* Building name on hover. It never takes the pointer, so moving across the
+ * map isn't interrupted. */
+.map-tooltip {
+  pointer-events: none;
+  animation: fade-in 120ms var(--ease);
+}
+
+.map-tooltip .maplibregl-popup-content {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+
+.map-tooltip .maplibregl-popup-content div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.map-tooltip .maplibregl-popup-content span {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
+.map-tooltip.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: var(--surface-1);
+}
+
+.map-tooltip.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: var(--surface-1);
+}
+
 /* Keep the controls clear of the open detail card. */
 .map-page.has-panel .maplibregl-ctrl-top-right,
 .map-page.has-panel .maplibregl-ctrl-bottom-right {

@@ -96,6 +96,8 @@ model Building {
   centroidLat    Float
   centroidLng    Float
   footprint      Json
+  /// Metres, from UBC open data; drives the 3D map. Null when unknown.
+  heightM        Float?
   sourceUrl      String?
   importedAt     DateTime?
   stepFreeAccess FactState  @default(unknown)

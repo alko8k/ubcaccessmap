@@ -2,6 +2,7 @@ import "dotenv/config";
 import type { Prisma } from "@prisma/client";
 import { BUILDING_SOURCE_URL } from "@ubc-access-map/shared";
 import { loadEnv } from "../env.js";
+import { buildingHeight } from "../lib/buildingHeight.js";
 import { centroidOfGeometry } from "../lib/geo.js";
 import { prisma } from "../prisma.js";
 
@@ -15,6 +16,8 @@ type BuildingFeature = {
     BLDG_STATE?: string | null;
     JURISDICTION?: string | null;
     MANAGE_ORG?: string | null;
+    BLDG_HEIGHT?: number | null;
+    MAX_FLOORS?: number | null;
   };
   geometry: {
     type: string;
@@ -128,6 +131,7 @@ async function importBuildings() {
       centroidLat: round(centroid.lat),
       centroidLng: round(centroid.lng),
       footprint: simplifyPrecision(geometry) as Prisma.InputJsonValue,
+      heightM: buildingHeight(feature.properties.BLDG_HEIGHT, feature.properties.MAX_FLOORS),
       sourceUrl: BUILDING_SOURCE_URL,
       importedAt: new Date(),
     };

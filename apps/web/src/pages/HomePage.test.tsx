@@ -23,6 +23,7 @@ vi.mock("../api/client.ts", () => ({
         centroidLat: 49.266,
         centroidLng: -123.249,
         footprint: null,
+        heightM: 26.9,
         stepFreeAccess: "yes",
         hours: null,
       },

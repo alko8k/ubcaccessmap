@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from "maplibre-gl";
 import { UBC_CAMPUS, type BuildingSummary, type WashroomSummary } from "@ubc-access-map/shared";
 import { RANK_COLORS, RANK_INK, UNRANKED_COLOR } from "../../lib/ranks.ts";
@@ -51,6 +51,95 @@ const BADGE_LAYERS: Array<[string, unknown[]]> = [
 
 const hovered = ["boolean", ["feature-state", "hover"], false] as never;
 
+/** Text colour for building names: 4.5:1 or better against its white halo. */
+const LABEL_INK = "#334155";
+
+/*
+ * 3D colours stay in the flat map's palette: neutral grey walls, tinted
+ * lightly by rank where a building has washrooms, and deeper when hovered or
+ * selected.
+ */
+const extrusionColor = [
+  "case",
+  ["any", ["==", ["get", "selected"], 1], hovered],
+  ["match", ["get", "rank"], "S", "#59ac7f", "A", "#84a856", "B", "#b39b49", "C", "#d48850", "D", "#de7c82", "#989fab"],
+  ["==", ["get", "mapped"], 1],
+  ["match", ["get", "rank"], "S", "#96c2b1", "A", "#abc09d", "B", "#c3ba96", "C", "#d3b19a", "D", "#d9aab3", "#c3c9d3"],
+  "#dde2ea",
+] as never;
+
+/** Used when UBC's data has no height for a building. */
+const FALLBACK_HEIGHT_M = 12;
+
+const THREE_D_KEY = "uam:map-3d";
+
+function readThreeD(): boolean {
+  try {
+    return window.localStorage.getItem(THREE_D_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeThreeD(on: boolean) {
+  try {
+    window.localStorage.setItem(THREE_D_KEY, on ? "1" : "0");
+  } catch {
+    // Private mode or blocked storage: the toggle still works, it just won't be remembered.
+  }
+}
+
+/** The map's own button for switching between the flat and 3D views. */
+class ThreeDControl implements maplibregl.IControl {
+  private container: HTMLDivElement | null = null;
+  readonly button: HTMLButtonElement;
+
+  constructor(onToggle: () => void) {
+    this.button = document.createElement("button");
+    this.button.type = "button";
+    this.button.className = "map-3d-toggle";
+    this.button.textContent = "3D";
+    this.button.addEventListener("click", onToggle);
+  }
+
+  setPressed(on: boolean) {
+    this.button.setAttribute("aria-pressed", String(on));
+    const label = on ? "Show flat map" : "Show 3D buildings";
+    this.button.setAttribute("aria-label", label);
+    this.button.title = label;
+  }
+
+  onAdd() {
+    this.container = document.createElement("div");
+    this.container.className = "maplibregl-ctrl maplibregl-ctrl-group";
+    this.container.appendChild(this.button);
+    return this.container;
+  }
+
+  onRemove() {
+    this.container?.remove();
+    this.container = null;
+  }
+}
+
+/** Builds the hover tooltip's content as DOM, so names are never parsed as HTML. */
+function tooltipContent(building: BuildingSummary) {
+  const root = document.createElement("div");
+  const name = document.createElement("strong");
+  name.textContent = building.name;
+  const detail = document.createElement("span");
+  const parts = [building.code];
+  if (building.washroomCount > 0) {
+    parts.push(`${building.washroomCount} washroom${building.washroomCount === 1 ? "" : "s"}`);
+    parts.push(building.bestRank ? `best rank ${building.bestRank}` : "not yet ranked");
+  } else {
+    parts.push("No washrooms mapped yet");
+  }
+  detail.textContent = parts.filter(Boolean).join(" · ");
+  root.append(name, detail);
+  return root;
+}
+
 /** Exponential ease-out: quick to respond, gentle to settle. */
 const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
@@ -100,6 +189,9 @@ export function CampusMap({
   const onLocateErrorRef = useRef(onLocateError);
   const onHoverRef = useRef(onHoverBuilding);
   const hoverStateRef = useRef<string | null>(null);
+  const tooltipRef = useRef<maplibregl.Popup | null>(null);
+  const threeDControlRef = useRef<ThreeDControl | null>(null);
+  const [threeD, setThreeD] = useState(readThreeD);
 
   useEffect(() => {
     onSelectRef.current = onSelectWashroom;
@@ -134,7 +226,11 @@ export function CampusMap({
       attributionControl: { compact: true },
     });
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+    // The compass resets rotation and tilt, which matters once 3D is on.
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
+      "top-right",
+    );
     // The one locate button: it also draws the position dot on the map.
     const geolocate = new maplibregl.GeolocateControl({
       positionOptions: { enableHighAccuracy: true, timeout: 10000 },
@@ -163,6 +259,10 @@ export function CampusMap({
         promoteId: "id",
       });
       map.addSource("washrooms", {
+        type: "geojson",
+        data: emptyCollection(),
+      });
+      map.addSource("labels", {
         type: "geojson",
         data: emptyCollection(),
       });
@@ -212,6 +312,49 @@ export function CampusMap({
           "line-opacity": ["case", ["==", ["get", "selected"], 1], 1, 0.95],
         },
       });
+      // Campus buildings at their real height. Hidden until 3D is switched on;
+      // the basemap's other buildings stay flat.
+      map.addLayer({
+        id: "building-3d",
+        type: "fill-extrusion",
+        source: "buildings",
+        layout: { visibility: "none" },
+        paint: {
+          "fill-extrusion-color": extrusionColor,
+          "fill-extrusion-height": ["coalesce", ["get", "height"], FALLBACK_HEIGHT_M],
+          "fill-extrusion-opacity": 0.95,
+          "fill-extrusion-vertical-gradient": true,
+        },
+      });
+      // Building names: the code at campus zoom, the full name closer in. Two
+      // layers with zoom ranges, rather than one zoom expression, so the switch
+      // happens exactly where intended.
+      for (const [id, field, zoomRange] of [
+        ["building-codes", "code", { minzoom: 15, maxzoom: 16 }],
+        ["building-names", "name", { minzoom: 16 }],
+      ] as const) {
+        map.addLayer({
+          id,
+          type: "symbol",
+          source: "labels",
+          ...zoomRange,
+          layout: {
+            "text-field": ["get", field],
+            "text-font": ["Noto Sans Bold"],
+            "text-size": ["interpolate", ["linear"], ["zoom"], 15, 10.5, 18, 13.5],
+            "text-max-width": 8,
+            "text-anchor": "top",
+            "text-offset": ["case", ["==", ["get", "mapped"], 1], ["literal", [0, 1.3]], ["literal", [0, -0.5]]],
+            "text-optional": true,
+            "text-padding": 4,
+          },
+          paint: {
+            "text-color": LABEL_INK,
+            "text-halo-color": MAP_HALO,
+            "text-halo-width": 1.8,
+          },
+        });
+      }
       // Tier badge: a coloured medal sitting on each building.
       map.addLayer({
         id: "building-badge-glow",
@@ -327,8 +470,22 @@ export function CampusMap({
       map.getCanvas().style.cursor = "";
     });
 
+    const threeDControl = new ThreeDControl(() => setThreeD((on) => !on));
+    threeDControl.setPressed(readThreeD());
+    map.addControl(threeDControl, "top-right");
+    threeDControlRef.current = threeDControl;
+
+    tooltipRef.current = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      offset: 14,
+      className: "map-tooltip",
+      maxWidth: "260px",
+    });
+
     mapRef.current = map;
     return () => {
+      tooltipRef.current?.remove();
       map.remove();
       mapRef.current = null;
     };
@@ -372,7 +529,53 @@ export function CampusMap({
       map.setFeatureState({ source: "buildings", id: hoveredBuildingId }, { hover: true });
     }
     hoverStateRef.current = hoveredBuildingId;
+
+    // Name on hover. The same facts are in the list and the panel, so the
+    // tooltip is hidden from screen readers to avoid reading them twice.
+    const tooltip = tooltipRef.current;
+    const building = buildings.find((item) => item.id === hoveredBuildingId);
+    if (tooltip && building) {
+      tooltip
+        .setLngLat([building.centroidLng, building.centroidLat])
+        .setDOMContent(tooltipContent(building))
+        .addTo(map);
+      tooltip.getElement()?.setAttribute("aria-hidden", "true");
+    } else {
+      tooltip?.remove();
+    }
   }, [hoveredBuildingId, buildings]);
+
+  // Flat or 3D: swap the campus layer and tilt the camera.
+  useEffect(() => {
+    writeThreeD(threeD);
+    threeDControlRef.current?.setPressed(threeD);
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+    const apply = () => {
+      if (!map.getLayer("building-3d")) {
+        return;
+      }
+      map.setLayoutProperty("building-3d", "visibility", threeD ? "visible" : "none");
+      map.setLayoutProperty("building-fill", "visibility", threeD ? "none" : "visible");
+      const camera = { pitch: threeD ? 55 : 0, bearing: threeD ? -15 : 0 };
+      // Already there (e.g. first load in flat mode): don't interrupt other camera moves.
+      if (Math.round(map.getPitch()) === camera.pitch && Math.round(map.getBearing()) === camera.bearing) {
+        return;
+      }
+      if (prefersReducedMotion()) {
+        map.jumpTo(camera);
+      } else {
+        map.easeTo({ ...camera, duration: 600, easing: easeOutExpo });
+      }
+    };
+    if (map.getLayer("building-3d")) {
+      apply();
+    } else {
+      map.once("load", apply);
+    }
+  }, [threeD]);
 
   const dataReady = buildings.length > 0;
 
@@ -481,7 +684,22 @@ function updateSources(
   const buildingSource = map.getSource("buildings") as GeoJSONSource | undefined;
   const washroomSource = map.getSource("washrooms") as GeoJSONSource | undefined;
   const badgeSource = map.getSource("badges") as GeoJSONSource | undefined;
-  if (!buildingSource || !washroomSource || !badgeSource) return;
+  const labelSource = map.getSource("labels") as GeoJSONSource | undefined;
+  if (!buildingSource || !washroomSource || !badgeSource || !labelSource) return;
+
+  labelSource.setData({
+    type: "FeatureCollection",
+    features: buildings.map((building) => ({
+      type: "Feature" as const,
+      properties: {
+        id: building.id,
+        name: building.name,
+        code: building.code ?? building.name,
+        mapped: building.washroomCount > 0 ? 1 : 0,
+      },
+      geometry: { type: "Point", coordinates: [building.centroidLng, building.centroidLat] },
+    })),
+  });
 
   buildingSource.setData({
     type: "FeatureCollection",
@@ -499,6 +717,7 @@ function updateSources(
             rank: building.bestRank ?? "",
             mapped: building.washroomCount > 0 ? 1 : 0,
             selected: building.id === selectedBuildingId ? 1 : 0,
+            height: building.heightM,
           },
           geometry,
         },

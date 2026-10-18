@@ -102,6 +102,7 @@ export const buildingSummarySchema = z.object({
   centroidLat: z.number(),
   centroidLng: z.number(),
   footprint: z.unknown(),
+  heightM: z.number().nullable(),
   stepFreeAccess: factStateSchema,
   hours: z.string().nullable(),
   washroomCount: z.number(),
