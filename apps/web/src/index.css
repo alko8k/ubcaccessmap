@@ -7,7 +7,7 @@
    * accent reads as part of the palette rather than a sticker on grey. */
   --ink: #efecf7;
   --ink-2: #a49cbd;
-  --ink-3: #746c8c;
+  --ink-3: #908aa8; /* 5.8:1 on --panel; the old #746c8c was 3.9:1 */
   --line: #221d33;
   --line-2: #332b4a;
   --paper: #08070c;
@@ -26,14 +26,18 @@
   --rank-B: #f2c53d;
   --rank-C: #f0883a;
   --rank-D: #e5484d;
-  --rank-none: #6d757a;
+  --rank-none: #8b9196;
 
   /* Type scale — five steps, nothing in between. */
-  --fs-xs: 0.72rem;
-  --fs-sm: 0.8rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
   --fs-md: 0.875rem;
   --fs-lg: 1rem;
   --fs-xl: 1.3rem;
+
+  /* Minimum control height. WCAG 2.2 asks for 24px targets; 36px is
+   * comfortable with a mouse, and touch screens raise it to 44px below. */
+  --target: 2.25rem;
 
   font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Helvetica, Arial, sans-serif;
@@ -96,6 +100,10 @@ a:hover {
 :focus-visible {
   outline: 2px solid var(--purple);
   outline-offset: 2px;
+}
+
+[tabindex="-1"]:focus {
+  outline: none;
 }
 
 .skip-link {
@@ -162,12 +170,20 @@ a:hover {
 
 .topbar nav a,
 .text-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
   color: var(--ink-2);
   background: none;
   border: 0;
-  padding: 0;
+  padding: 0.25rem 0;
   cursor: pointer;
   text-decoration: none;
+}
+
+.panel-close {
+  padding-inline: 0.5rem;
+  margin-right: -0.5rem;
 }
 
 .topbar nav a:hover,
@@ -231,7 +247,25 @@ a:hover {
 }
 
 .filter-search {
-  margin-bottom: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.filter-toggle {
+  display: none;
+}
+
+/* On desktop the row only holds "Clear filters", so collapse it when that's absent. */
+.filter-actions:not(:has(.text-btn)) {
+  display: none;
 }
 
 .filter-search,
@@ -246,6 +280,12 @@ a:hover {
 
 .filter-selects {
   grid-template-columns: 1fr 1fr;
+}
+
+.filter-selects label,
+.filter-selects select {
+  min-width: 0;
+  width: 100%;
 }
 
 .filter-checks {
@@ -284,6 +324,31 @@ button:not(.text-btn) {
   font-size: var(--fs-md);
 }
 
+input:not([type="checkbox"], [type="range"]),
+select,
+button:not(.text-btn) {
+  min-height: var(--target);
+}
+
+input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  flex: none;
+}
+
+input[type="range"] {
+  accent-color: var(--purple);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
 input:hover,
 select:hover,
 textarea:hover {
@@ -301,10 +366,24 @@ button:not(.text-btn):hover {
   color: var(--purple-bright);
 }
 
-button[aria-pressed="true"] {
+button[aria-pressed="true"],
+button.primary {
   background: var(--purple);
   border-color: var(--purple);
   color: #12091f;
+  font-weight: 600;
+}
+
+button.primary:hover {
+  background: var(--purple-bright);
+  border-color: var(--purple-bright);
+  color: #12091f;
+}
+
+button:disabled,
+button:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .hint,
@@ -335,15 +414,25 @@ button[aria-pressed="true"] {
   font-variant-numeric: tabular-nums;
 }
 
-.view-toggle {
+.results-tools {
   display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.view-toggle button {
-  font-size: var(--fs-xs);
-  padding: 0.28rem 0.55rem;
+/* A segmented control: two halves of one button. */
+.view-toggle {
+  display: flex;
+}
+
+.view-toggle button,
+.locate-btn {
+  font-size: var(--fs-sm);
+  padding-block: 0.3rem;
+}
+
+.view-toggle button + button {
+  margin-left: -1px;
 }
 
 .result-list {
@@ -363,6 +452,7 @@ button[aria-pressed="true"] {
   border: 0;
   border-bottom: 1px solid var(--line);
   border-radius: 0;
+  width: calc(100% + 2.5rem);
   margin: 0 -1.25rem;
   padding: 0.7rem 1.25rem;
 }
@@ -373,6 +463,7 @@ button[aria-pressed="true"] {
 }
 
 .result-list--panel button {
+  width: 100%;
   padding-left: 0.25rem;
   padding-right: 0.25rem;
   margin: 0;
@@ -556,6 +647,7 @@ button[aria-pressed="true"] {
   overscroll-behavior: contain;
   border-left: 1px solid var(--line);
   background: var(--panel);
+  z-index: 3;
 }
 
 .sidebar,
@@ -599,6 +691,85 @@ button[aria-pressed="true"] {
   border-radius: 2px;
   color: var(--ink-2);
   font-size: var(--fs-sm);
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
+}
+
+.notice--error {
+  border-color: color-mix(in srgb, var(--rank-D) 55%, var(--line-2));
+  color: var(--ink);
+}
+
+.notice--error button {
+  margin-top: 0.25rem;
+}
+
+.empty-state {
+  padding: 1.25rem 0;
+  color: var(--ink-2);
+}
+
+.result-list--loading li {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.skeleton {
+  display: block;
+  border-radius: 999px;
+  background: var(--wash);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton--badge {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+}
+
+.skeleton--text {
+  height: 0.7rem;
+  width: 70%;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Vote sliders: label and current value on one line, slider below. */
+.vote-form .rating-field {
+  gap: 0.2rem;
+}
+
+.rating-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.rating-label output {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.vote-form fieldset {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.vote-form legend {
+  margin-bottom: 0.4rem;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
 }
 
 .rank-box,
@@ -653,26 +824,36 @@ button[aria-pressed="true"] {
   gap: 0.6rem;
 }
 
-.dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  background: #05040acc;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  z-index: 30;
-}
-
 .dialog,
 .page {
   max-width: 640px;
 }
 
+/* Padding lives on .dialog-body so a click on the <dialog> itself is always
+ * a click on the backdrop. */
 .dialog {
+  width: min(640px, calc(100% - 2rem));
+  padding: 0;
   background: var(--panel);
+  color: var(--ink);
   border: 1px solid var(--line-2);
-  padding: 1.25rem;
   border-radius: 2px;
+}
+
+.dialog::backdrop {
+  background: #05040acc;
+}
+
+.dialog-body {
+  padding: 1.25rem;
+}
+
+.dialog label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--ink-2);
 }
 
 .dialog-actions {
@@ -740,6 +921,8 @@ button[aria-pressed="true"] {
 
   .app-shell {
     grid-template-columns: 1fr;
+    /* Extra height goes to the map, not into a gap under the sidebar. */
+    grid-template-rows: auto 1fr;
     overflow: visible;
   }
 
@@ -752,8 +935,52 @@ button[aria-pressed="true"] {
     position: static;
   }
 
+  /* Filters fold away behind a toggle so the map isn't pushed off screen. */
+  .filter-actions,
+  .filter-actions:not(:has(.text-btn)) {
+    display: flex;
+  }
+
+  .filter-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .filter-refinements:not(.is-open) {
+    display: none;
+  }
+
+  .filter-refinements.is-open {
+    padding-top: 0.25rem;
+  }
+
+  /* Map and List become real alternatives: in map view the list is hidden. */
+  .app-shell.view-map .result-list:not(.result-list--panel) {
+    display: none;
+  }
+
+  /* iOS zooms the page when a focused field is under 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+
+  .tagline {
+    display: none;
+  }
+
+  /* The panel stacks under the map here, so the area must grow to fit it
+   * instead of clipping it. */
   .map-area {
-    min-height: 60svh;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .map-shell {
+    height: 60svh;
+    flex: none;
   }
 
   .map-area.list-only .map-shell {
@@ -766,6 +993,26 @@ button[aria-pressed="true"] {
     height: auto;
     border-left: 0;
     border-top: 1px solid var(--line);
+  }
+}
+
+@media (pointer: coarse) {
+  :root {
+    --target: 2.75rem;
+  }
+
+  .topbar nav a,
+  .text-btn {
+    min-height: 2.75rem;
+  }
+
+  input[type="checkbox"] {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+
+  .check {
+    min-height: 2.75rem;
   }
 }
 

@@ -26,7 +26,7 @@ export default function App() {
               Sign out {user.displayName}
             </button>
           ) : (
-            <Link to="/?signin=1">Verify email</Link>
+            <Link to="/?signin=1">Sign in</Link>
           )}
         </nav>
       </header>

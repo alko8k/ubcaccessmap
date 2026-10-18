@@ -15,7 +15,7 @@ export const RANK_COLORS: Record<RankLetter, string> = {
   D: "#e5484d",
 };
 
-export const UNRANKED_COLOR = "#6d757a";
+export const UNRANKED_COLOR = "#8b9196";
 
 export function rankColor(letter: RankLetter | null | undefined): string {
   return letter ? RANK_COLORS[letter] : UNRANKED_COLOR;

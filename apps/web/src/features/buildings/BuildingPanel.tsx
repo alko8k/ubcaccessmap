@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import type { BuildingSummary, WashroomSummary } from "@ubc-access-map/shared";
 import { factLabel, genderLabel } from "../../lib/filters.ts";
+import { usePanel } from "../../lib/usePanel.ts";
 
 type Props = {
   building: BuildingSummary;
@@ -48,14 +50,16 @@ export function BuildingPanel({
   onSelectWashroom,
   onClose,
 }: Props) {
+  const panelRef = useRef<HTMLElement | null>(null);
+  usePanel(panelRef, building.id, onClose);
   const floors = groupByFloor(washrooms);
   const hidden = building.washroomCount - washrooms.length;
 
   return (
-    <section className="panel" aria-labelledby="building-heading">
+    <section className="panel" aria-labelledby="building-heading" tabIndex={-1} ref={panelRef}>
       <div className="panel-head">
         <p className="eyebrow">{building.code ?? "Building"}</p>
-        <button type="button" className="text-btn" onClick={onClose} aria-label="Close building">
+        <button type="button" className="text-btn panel-close" onClick={onClose} aria-label="Close building">
           Close
         </button>
       </div>

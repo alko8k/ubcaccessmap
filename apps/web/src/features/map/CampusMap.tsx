@@ -13,6 +13,8 @@ type Props = {
   onSelectWashroom: (id: string) => void;
   onSelectBuilding: (id: string) => void;
   locateRequest: number;
+  /** Called with a readable reason when the browser can't provide a position. */
+  onLocateError: (message: string) => void;
 };
 
 /**
@@ -40,11 +42,13 @@ export function CampusMap({
   onSelectWashroom,
   onSelectBuilding,
   locateRequest,
+  onLocateError,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const onSelectRef = useRef(onSelectWashroom);
   const onSelectBuildingRef = useRef(onSelectBuilding);
+  const onLocateErrorRef = useRef(onLocateError);
 
   useEffect(() => {
     onSelectRef.current = onSelectWashroom;
@@ -53,6 +57,10 @@ export function CampusMap({
   useEffect(() => {
     onSelectBuildingRef.current = onSelectBuilding;
   }, [onSelectBuilding]);
+
+  useEffect(() => {
+    onLocateErrorRef.current = onLocateError;
+  }, [onLocateError]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -255,17 +263,31 @@ export function CampusMap({
   }, [buildings, washrooms, selectedWashroomId, selectedBuildingId]);
 
   useEffect(() => {
-    if (locateRequest === 0 || !navigator.geolocation) {
+    if (locateRequest === 0) {
+      return;
+    }
+    if (!navigator.geolocation) {
+      onLocateErrorRef.current("This browser can't share your location.");
       return;
     }
 
-    navigator.geolocation.getCurrentPosition((position) => {
-      mapRef.current?.flyTo({
-        center: [position.coords.longitude, position.coords.latitude],
-        zoom: 16.5,
-        essential: true,
-      });
-    });
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        mapRef.current?.flyTo({
+          center: [position.coords.longitude, position.coords.latitude],
+          zoom: 16.5,
+          essential: true,
+        });
+      },
+      (error) => {
+        onLocateErrorRef.current(
+          error.code === error.PERMISSION_DENIED
+            ? "Location access is off. Allow it in your browser settings, or search for a building instead."
+            : "Couldn't find your location. Try again, or search for a building instead.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   }, [locateRequest]);
 
   return (

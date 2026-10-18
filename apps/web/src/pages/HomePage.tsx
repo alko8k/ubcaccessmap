@@ -7,7 +7,14 @@ import { BuildingPanel } from "../features/buildings/BuildingPanel.tsx";
 import { CampusMap } from "../features/map/CampusMap.tsx";
 import { FilterBar } from "../features/map/FilterBar.tsx";
 import { DetailPanel } from "../features/washrooms/DetailPanel.tsx";
-import { genderLabel, filtersFromSearch, mapQueryString, searchFromFilters } from "../lib/filters.ts";
+import {
+  activeFilterCount,
+  defaultFilters,
+  genderLabel,
+  filtersFromSearch,
+  mapQueryString,
+  searchFromFilters,
+} from "../lib/filters.ts";
 
 export function HomePage() {
   const [params, setParams] = useSearchParams();
@@ -16,6 +23,7 @@ export function HomePage() {
   const selectedBuildingId = params.get("building") ?? undefined;
   const [authOpen, setAuthOpen] = useState(false);
   const [locateRequest, setLocateRequest] = useState(0);
+  const [locateMessage, setLocateMessage] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "list">("map");
 
   const mapQuery = useQuery({
@@ -62,13 +70,40 @@ export function HomePage() {
     setParams(new URLSearchParams(searchFromFilters(filters)));
   }
 
+  function clearFilters() {
+    updateFilters({ ...defaultFilters });
+  }
+
+  /*
+   * The nav's sign-in link opens the dialog through ?signin=1, so closing has
+   * to drop that parameter too, or the dialog reopens on the next render.
+   */
+  function closeAuth() {
+    setAuthOpen(false);
+    if (params.get("signin") === "1") {
+      const search = new URLSearchParams(params);
+      search.delete("signin");
+      setParams(search, { replace: true });
+    }
+  }
+
+  function locate() {
+    setLocateMessage(null);
+    setView("map");
+    setLocateRequest((value) => value + 1);
+  }
+
   const washrooms = mapQuery.data?.washrooms ?? [];
   const buildings = mapQuery.data?.buildings ?? [];
   const selectedBuilding = buildings.find((building) => building.id === selectedBuildingId);
   const mappedBuildings = buildings.filter((building) => building.washroomCount > 0).length;
+  const activeFilters = activeFilterCount(filters);
+  const narrowedBy = [filters.q && "that search", activeFilters > 0 && "these filters"]
+    .filter(Boolean)
+    .join(" and ");
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell view-${view}`}>
       <a className="skip-link" href="#results">
         Skip to results
       </a>
@@ -99,26 +134,63 @@ export function HomePage() {
 
         <div className="results-head">
           <p className="result-count" aria-live="polite">
-            {washrooms.length} washroom{washrooms.length === 1 ? "" : "s"}
+            {mapQuery.isSuccess
+              ? `${washrooms.length}${narrowedBy ? " matching" : ""} washroom${washrooms.length === 1 ? "" : "s"}`
+              : "\u00a0"}
           </p>
-          <div className="view-toggle" role="group" aria-label="View">
-            <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")}>
-              Map
-            </button>
-            <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>
-              List
-            </button>
-            <button type="button" onClick={() => setLocateRequest((value) => value + 1)}>
+          <div className="results-tools">
+            <div className="view-toggle" role="group" aria-label="View">
+              <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")}>
+                Map
+              </button>
+              <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>
+                List
+              </button>
+            </div>
+            <button type="button" className="locate-btn" onClick={locate}>
               Locate me
             </button>
           </div>
         </div>
 
+        {locateMessage && (
+          <p role="status" className="notice">
+            {locateMessage}
+          </p>
+        )}
+
         <div id="results">
-          {mapQuery.isLoading && <p>Loading campus data…</p>}
-          {mapQuery.isError && <p role="alert">Could not load the map. Is the API running?</p>}
+          {mapQuery.isLoading && (
+            <ul className="result-list result-list--loading" aria-label="Loading washrooms">
+              {[0, 1, 2, 3].map((row) => (
+                <li key={row} aria-hidden="true">
+                  <span className="skeleton skeleton--badge" />
+                  <span className="skeleton skeleton--text" />
+                </li>
+              ))}
+            </ul>
+          )}
+          {mapQuery.isError && (
+            <div role="alert" className="empty-state">
+              <p>Couldn’t load washrooms right now.</p>
+              <button type="button" onClick={() => void mapQuery.refetch()}>
+                Try again
+              </button>
+            </div>
+          )}
           {mapQuery.isSuccess && washrooms.length === 0 && (
-            <p>No curated washrooms match those filters.</p>
+            <div className="empty-state">
+              <p>
+                {narrowedBy
+                  ? `No mapped washrooms match ${narrowedBy}.`
+                  : "No washrooms are mapped yet."}
+              </p>
+              {narrowedBy && (
+                <button type="button" onClick={clearFilters}>
+                  Clear search and filters
+                </button>
+              )}
+            </div>
           )}
           <ul className="result-list">
             {washrooms.map((washroom) => (
@@ -153,9 +225,11 @@ export function HomePage() {
           onSelectWashroom={selectWashroom}
           onSelectBuilding={selectBuilding}
           locateRequest={locateRequest}
+          onLocateError={setLocateMessage}
         />
         {selectedId ? (
           <DetailPanel
+            key={selectedId}
             washroomId={selectedId}
             onClose={clearWashroom}
             onNeedAuth={() => setAuthOpen(true)}
@@ -177,7 +251,7 @@ export function HomePage() {
 
       <AuthDialog
         open={authOpen || params.get("signin") === "1"}
-        onClose={() => setAuthOpen(false)}
+        onClose={closeAuth}
       />
     </div>
   );
