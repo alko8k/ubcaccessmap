@@ -1,8 +1,11 @@
+import { useDocumentTitle } from "../lib/useDocumentTitle.ts";
+
 export function AboutPage() {
+  useDocumentTitle("About");
   return (
     <main className="page prose">
-      <h1>About UBC Access Map</h1>
-      <p>
+      <h1>A washroom map that puts access facts first</h1>
+      <p className="lede">
         A student-built campus directory for finding a washroom when you need one, with
         accessibility facts kept separate from community taste.
       </p>
@@ -26,6 +29,11 @@ export function AboutPage() {
         We store a hashed magic-link token and a session cookie. Display names are generated from
         the email local part. Student numbers and ID images are not collected. Email verification
         shows affiliation with an allowed UBC domain; it does not prove current enrolment.
+      </p>
+      <h2>Credits</h2>
+      <p>
+        Building data © UBC Campus and Community Planning, PDDL 1.0. Map tiles © OpenFreeMap,
+        OpenMapTiles, and OpenStreetMap contributors.
       </p>
     </main>
   );

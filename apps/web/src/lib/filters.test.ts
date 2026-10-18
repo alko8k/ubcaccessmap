@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { defaultFilters, filtersFromSearch, searchFromFilters } from "./filters.ts";
+import {
+  activeFilterCount,
+  defaultFilters,
+  filtersFromSearch,
+  searchFromFilters,
+  tagLabel,
+} from "./filters.ts";
 
 describe("filter URL state", () => {
   it("round-trips selected filters through the query string", () => {
@@ -15,5 +21,18 @@ describe("filter URL state", () => {
 
   it("treats an empty search as the default filter set", () => {
     expect(filtersFromSearch("")).toEqual(defaultFilters);
+  });
+
+  it("counts refinements but not the search box", () => {
+    expect(activeFilterCount(defaultFilters)).toBe(0);
+    expect(
+      activeFilterCount({ ...defaultFilters, q: "nest", rank: "A", grabBars: true }),
+    ).toBe(2);
+  });
+});
+
+describe("tagLabel", () => {
+  it("turns a tag slug into a readable label", () => {
+    expect(tagLabel("usually-available")).toBe("Usually available");
   });
 });

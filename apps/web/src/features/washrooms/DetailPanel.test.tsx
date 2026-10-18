@@ -49,12 +49,22 @@ describe("DetailPanel", () => {
     const client = new QueryClient();
     render(
       <QueryClientProvider client={client}>
-        <DetailPanel washroomId="w1" onClose={() => undefined} onNeedAuth={() => undefined} />
+        <DetailPanel
+          washroomId="w1"
+          onClose={() => undefined}
+          onDismiss={() => undefined}
+          onNeedAuth={() => undefined}
+        />
       </QueryClientProvider>,
     );
 
     expect(await screen.findByRole("heading", { name: /accessible \/ all-gender/i })).toBeTruthy();
     expect(screen.getByText("Accessible stall")).toBeTruthy();
     expect(screen.getByRole("button", { name: /verify a ubc email to vote/i })).toBeTruthy();
+    // With no votes, the rank card invites a first vote instead of showing "0 votes".
+    expect(screen.getByText(/no votes yet/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /be the first to rate it/i })).toBeTruthy();
+    // The header steps back to the building by name.
+    expect(screen.getByRole("button", { name: "Back to NEST" })).toBeTruthy();
   });
 });

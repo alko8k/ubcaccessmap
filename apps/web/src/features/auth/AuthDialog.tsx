@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Mail } from "lucide-react";
 import { fetchDevMagicLink } from "../../api/client.ts";
 import { useAuth } from "../../lib/auth.tsx";
 
@@ -13,10 +14,23 @@ export function AuthDialog({ open, onClose }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [devUrl, setDevUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
 
-  if (!open) {
-    return null;
-  }
+  /*
+   * A native modal dialog gives Escape-to-close, keeps focus inside, makes the
+   * page behind it inert, and returns focus to the opener when it closes.
+   */
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+    if (open && !dialog.open) {
+      dialog.showModal();
+    } else if (!open && dialog.open) {
+      dialog.close();
+    }
+  }, [open]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -39,47 +53,65 @@ export function AuthDialog({ open, onClose }: Props) {
   }
 
   return (
-    <div className="dialog-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="auth-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id="auth-title">Verify a UBC email</h2>
-        <p>
-          Voting is limited to <code>@student.ubc.ca</code> and <code>@ubc.ca</code> addresses. This
-          checks affiliation, not current enrolment, and we never collect student numbers or ID
-          photos.
+    <dialog
+      ref={dialogRef}
+      className="dialog"
+      aria-labelledby="auth-title"
+      // Escape fires "cancel"; let React state drive the actual close.
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      // A click on the dialog element itself, not its children, is a click on
+      // the backdrop.
+      onClick={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="dialog-body">
+        <span className="dialog-icon" aria-hidden="true">
+          <Mail size={22} />
+        </span>
+        <h2 id="auth-title">Sign in with your UBC email</h2>
+        <p className="dialog-lede">
+          We’ll email you a one-time link. No password, no student number, no ID photo. Only{" "}
+          <code>@student.ubc.ca</code> and <code>@ubc.ca</code> addresses can vote.
         </p>
         <form onSubmit={onSubmit}>
-          <label>
-            UBC email
+          <label className="field">
+            <span>UBC email</span>
             <input
               type="email"
               required
               autoComplete="email"
+              inputMode="email"
+              placeholder="you@student.ubc.ca"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
           <div className="dialog-actions">
-            <button type="submit" disabled={busy}>
-              Email me a link
-            </button>
-            <button type="button" className="text-btn" onClick={onClose}>
+            <button type="button" className="btn btn--ghost" onClick={onClose}>
               Cancel
+            </button>
+            <button type="submit" className="btn btn--primary" disabled={busy}>
+              {busy ? "Sending…" : "Email me a link"}
             </button>
           </div>
         </form>
-        {message && <p role="status">{message}</p>}
+        {message && (
+          <p role="status" className="notice">
+            {message}
+          </p>
+        )}
         {devUrl && (
           <p className="notice">
             <a href={devUrl}>Open sign-in link →</a>
           </p>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

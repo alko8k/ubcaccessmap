@@ -24,6 +24,13 @@ export const defaultFilters: FilterState = {
   changingTable: false,
 };
 
+/** Refinements in effect, not counting the search box, which stays visible. */
+export function activeFilterCount(filters: FilterState): number {
+  return (Object.keys(defaultFilters) as Array<keyof FilterState>).filter(
+    (key) => key !== "q" && filters[key] !== defaultFilters[key],
+  ).length;
+}
+
 export function filtersFromSearch(search: string): FilterState {
   const params = new URLSearchParams(search);
   return {
@@ -93,4 +100,10 @@ export function factLabel(value: string) {
   if (value === "yes") return "Yes";
   if (value === "no") return "No";
   return "Unknown";
+}
+
+/** Rating tags are stored as slugs ("usually-available"). */
+export function tagLabel(tag: string) {
+  const words = tag.replace(/-/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
