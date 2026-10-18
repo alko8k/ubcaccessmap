@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchReports, updateReport } from "../api/client.ts";
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/auth.tsx";
+import { useDocumentTitle } from "../lib/useDocumentTitle.ts";
 
 const reportTypeLabels: Record<string, string> = {
   incorrect_access: "Accessibility fact is wrong",
@@ -12,6 +13,7 @@ const reportTypeLabels: Record<string, string> = {
 
 export function ModerationPage() {
   const { user } = useAuth();
+  useDocumentTitle("Moderation");
   const queryClient = useQueryClient();
   const reportsQuery = useQuery({
     queryKey: ["reports"],

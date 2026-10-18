@@ -17,6 +17,7 @@ import {
   mapQueryString,
   searchFromFilters,
 } from "../lib/filters.ts";
+import { useDocumentTitle } from "../lib/useDocumentTitle.ts";
 
 const TIERS = ["S", "A", "B", "C", "D"] as const;
 
@@ -28,6 +29,7 @@ export function HomePage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [locateMessage, setLocateMessage] = useState<string | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  useDocumentTitle();
 
   const mapQuery = useQuery({
     queryKey: ["map", mapQueryString(filters)],
@@ -147,6 +149,7 @@ export function HomePage() {
       <a className="skip-link" href="#results">
         Skip to results
       </a>
+      <h1 className="sr-only">Find a washroom on campus</h1>
 
       <CampusMap
         buildings={buildings}

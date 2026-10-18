@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from "maplibre-gl";
 import { UBC_CAMPUS, type BuildingSummary, type WashroomSummary } from "@ubc-access-map/shared";
-import { RANK_COLORS, UNRANKED_COLOR } from "../../lib/ranks.ts";
-import { MAP_INK, darkCampusStyle } from "./mapStyle.ts";
+import { RANK_COLORS, RANK_INK, UNRANKED_COLOR } from "../../lib/ranks.ts";
+import { MAP_HALO, campusStyle } from "./mapStyle.ts";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 type Props = {
@@ -67,7 +67,7 @@ export function CampusMap({
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: darkCampusStyle,
+      style: campusStyle,
       center: [UBC_CAMPUS.center.lng, UBC_CAMPUS.center.lat],
       zoom: UBC_CAMPUS.defaultZoom,
       maxBounds: [
@@ -168,7 +168,7 @@ export function CampusMap({
           "circle-radius": ["case", ["==", ["get", "selected"], 1], 15, 12],
           "circle-color": rankMatch as never,
           "circle-stroke-width": 2,
-          "circle-stroke-color": MAP_INK,
+          "circle-stroke-color": MAP_HALO,
         },
       });
       map.addLayer({
@@ -181,7 +181,7 @@ export function CampusMap({
           "text-size": ["case", ["==", ["get", "selected"], 1], 15, 13],
           "text-allow-overlap": true,
         },
-        paint: { "text-color": MAP_INK },
+        paint: { "text-color": RANK_INK },
       });
 
       // Individual washrooms only appear once a building is opened.
@@ -193,7 +193,7 @@ export function CampusMap({
           "circle-radius": ["case", ["==", ["get", "selected"], 1], 8, 6],
           "circle-color": rankMatch as never,
           "circle-stroke-width": 2,
-          "circle-stroke-color": MAP_INK,
+          "circle-stroke-color": MAP_HALO,
         },
       });
     });

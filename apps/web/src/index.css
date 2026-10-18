@@ -5,49 +5,56 @@
  * ======================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Black ground, purple accent. Neutrals carry a slight violet cast so the
-   * accent reads as part of the palette rather than a sticker on grey. */
-  --surface-0: #08070c; /* page, map background */
-  --surface-1: #100d18; /* cards */
-  --surface-2: #161222; /* raised blocks inside cards */
-  --surface-3: #1e1830; /* hover */
-  /* Floating chrome over the map. 88% opaque keeps every text pair at AA
-   * even over the lightest basemap fill. */
-  --glass: rgb(16 13 24 / 0.88);
+  /* Light ground, purple accent. Neutrals carry a slight violet cast so the
+   * accent reads as part of the palette rather than a sticker on grey.
+   * Every text pair below is WCAG AA (4.5:1) or better on every surface it
+   * sits on; ratios are against --surface-1 unless noted. */
+  --surface-0: #f4f2f8; /* page */
+  --surface-1: #ffffff; /* cards */
+  --surface-2: #f8f6fc; /* raised blocks inside cards */
+  --surface-3: #efebf7; /* hover */
+  /* Floating chrome over the map. 90% opaque keeps text at AA over anything
+   * the map can draw underneath, including a selected D-rank building. */
+  --glass: rgb(255 255 255 / 0.9);
 
-  --ink: #efecf7; /* 16.5:1 on surface-1 */
-  --ink-2: #a49cbd; /* 7.4:1 */
-  --ink-3: #908aa8; /* 5.8:1; 4.8:1 on the selected tint, the lowest pair */
-  --line: #241e36;
-  --line-2: #342c4c;
+  --ink: #1b1626; /* 17.7:1 */
+  --ink-2: #4a4458; /* 9.3:1 */
+  --ink-3: #5d576d; /* 6.9:1; 5.3:1 on a selected chip, the lowest pair */
+  --line: #e6e2ef; /* decorative dividers only */
+  /* Borders that identify a control (inputs) need 3:1 (WCAG 1.4.11). */
+  --line-2: #847e98; /* 3.7:1 on white, 3.3:1 on --surface-0 */
+  --line-soft: #d9d4e4; /* borders of things already identified by text */
 
   /* The accent. Purple means interactive: links, focus, selection, and the
    * clickable building outlines on the map. It never encodes rank. */
-  --purple: #a970ff;
-  --purple-bright: #c9a4ff;
-  --purple-dim: #6d4aa8;
-  --purple-tint: color-mix(in srgb, var(--purple) 16%, var(--surface-1));
-  --on-purple: #12091f; /* 6:1 on --purple */
+  --purple: #6d28d9; /* 7.1:1; white on it is 7.1:1 */
+  --purple-bright: #5b21b6; /* hover and accent text, 9:1 */
+  --purple-dim: #a78bdb; /* decorative hover borders */
+  --purple-tint: color-mix(in srgb, var(--purple) 9%, white);
+  --on-purple: #ffffff;
+  --danger: #b42318; /* 6.6:1 */
 
-  /* Tier ramp: red (D) through green (S). Mirrors lib/ranks.ts. */
-  --rank-S: #35d07f;
-  --rank-A: #a3d939;
-  --rank-B: #f2c53d;
-  --rank-C: #f0883a;
-  --rank-D: #e5484d;
-  --rank-none: #8b9196;
+  /* Tier ramp: red (D) through green (S). Mirrors lib/ranks.ts.
+   * Each fill is 3.7:1 against white, so the medal shape passes WCAG 1.4.11,
+   * and the dark letter on it is 5.1:1. */
+  --rank-S: #249854;
+  --rank-A: #62931a;
+  --rank-B: #a58007;
+  --rank-C: #d46611;
+  --rank-D: #e35459;
+  --rank-none: #868395;
+  --rank-ink: #14111c;
 
   /* Shape and depth. */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-pill: 999px;
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.25);
-  --shadow-2: 0 2px 6px rgb(0 0 0 / 0.45), 0 16px 40px rgb(0 0 0 / 0.45);
-  /* A faint top edge so cards read as lifted, not cut out. */
-  --edge: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --shadow-1: 0 1px 2px rgb(28 20 50 / 0.08), 0 2px 8px rgb(28 20 50 / 0.06);
+  --shadow-2: 0 2px 6px rgb(28 20 50 / 0.08), 0 12px 32px rgb(28 20 50 / 0.12);
+  --edge: 0 0 0 0 transparent;
 
   /* Type scale. */
   --fs-xs: 0.75rem;
@@ -117,7 +124,7 @@ textarea {
 }
 
 a {
-  color: var(--purple-bright);
+  color: var(--purple);
   text-underline-offset: 3px;
   text-decoration-color: var(--purple-dim);
 }
@@ -195,7 +202,7 @@ code {
   gap: 0.45rem;
   min-height: var(--target);
   padding: 0.45rem 0.95rem;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--ink);
@@ -226,6 +233,7 @@ code {
 .btn--primary:hover {
   background: var(--purple-bright);
   border-color: var(--purple-bright);
+  color: var(--on-purple);
 }
 
 .btn--ghost {
@@ -342,7 +350,7 @@ textarea {
   flex: none;
   min-height: 2rem;
   padding: 0.3rem 0.8rem;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--ink-2);
@@ -361,9 +369,13 @@ textarea {
 }
 
 .chip.is-on {
-  background: color-mix(in srgb, var(--purple) 22%, var(--surface-2));
+  background: color-mix(in srgb, var(--purple) 12%, var(--surface-2));
   border-color: var(--purple);
   color: var(--ink);
+}
+
+.chip.is-on svg {
+  color: var(--purple);
 }
 
 /* The hidden checkbox inside a chip still takes focus; show it on the chip. */
@@ -532,7 +544,7 @@ textarea {
   top: calc(100% + 6px);
   min-width: 11rem;
   padding: 0.35rem;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   border-radius: var(--r-md);
   background: var(--surface-1);
   box-shadow: var(--shadow-2);
@@ -585,7 +597,7 @@ textarea {
   background: var(--glass);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   box-shadow: var(--shadow-2), var(--edge);
 }
 
@@ -665,7 +677,7 @@ textarea {
   flex: none;
   width: 1px;
   height: 1.25rem;
-  background: var(--line-2);
+  background: var(--line-soft);
 }
 
 /* Sheet: on desktop, simply the card's scrolling body. */
@@ -921,6 +933,8 @@ textarea {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Keep Tab-focused fields clear of the sticky header (WCAG 2.4.11). */
+  scroll-padding-top: 64px;
 }
 
 .panel-head {
@@ -1025,9 +1039,8 @@ textarea {
   display: grid;
   place-items: center;
   border-radius: var(--r-pill);
-  border: 1.5px solid var(--tier);
-  background: color-mix(in srgb, var(--tier) 16%, transparent);
-  color: var(--tier);
+  background: var(--tier);
+  color: var(--rank-ink);
   font-size: var(--fs-xs);
   font-weight: 750;
   letter-spacing: 0.02em;
@@ -1039,18 +1052,15 @@ textarea {
 .rank-C { --tier: var(--rank-C); }
 .rank-D { --tier: var(--rank-D); }
 
-/* The S medal is the trophy: filled, not outlined. */
+/* The S medal is the trophy: an extra ring around the fill. */
 .rank-S {
-  background: var(--rank-S);
-  color: #06210f;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--rank-S) 40%, transparent);
+  box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 3.5px var(--rank-S);
 }
 
 .rank-large {
   min-width: 3.25rem;
   height: 3.25rem;
   font-size: 1.4rem;
-  border-width: 2px;
 }
 
 .tier-meter {
@@ -1120,7 +1130,7 @@ textarea {
 
 /* Yes and No are both facts: full strength. Unknown recedes. */
 .fact-grid li[data-state="yes"] .fact-state svg {
-  color: var(--purple-bright);
+  color: var(--purple);
 }
 
 .fact-grid li[data-state="unknown"] {
@@ -1251,7 +1261,7 @@ textarea {
 .notice {
   margin: 0.25rem 0 0;
   padding: 0.65rem 0.8rem;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   border-radius: var(--r-sm);
   background: var(--surface-2);
   color: var(--ink-2);
@@ -1268,7 +1278,7 @@ textarea {
 }
 
 .notice--error {
-  border-color: color-mix(in srgb, var(--rank-D) 55%, var(--line-2));
+  border-color: var(--danger);
   color: var(--ink);
 }
 
@@ -1278,7 +1288,7 @@ textarea {
 
 .empty-note {
   padding: 0.9rem 1rem;
-  border: 1px dashed var(--line-2);
+  border: 1px dashed var(--line-soft);
   border-radius: var(--r-md);
   color: var(--ink-2);
   font-size: var(--fs-sm);
@@ -1305,7 +1315,7 @@ textarea {
   width: min(460px, calc(100% - 2rem));
   padding: 0;
   margin: auto;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   border-radius: var(--r-lg);
   background: var(--surface-1);
   color: var(--ink);
@@ -1317,7 +1327,7 @@ textarea {
 }
 
 .dialog::backdrop {
-  background: rgb(5 4 10 / 0.7);
+  background: rgb(20 14 35 / 0.35);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -1406,7 +1416,7 @@ textarea {
 }
 
 .status-icon--error {
-  color: var(--rank-D);
+  color: var(--danger);
 }
 
 .spin {
@@ -1448,7 +1458,7 @@ textarea {
   flex: none;
   padding: 0.1rem 0.55rem;
   border-radius: var(--r-pill);
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--line-soft);
   color: var(--ink-2);
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -1477,7 +1487,7 @@ textarea {
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border-radius: var(--r-md) !important;
-  box-shadow: var(--shadow-1), 0 0 0 1px var(--line-2) !important;
+  box-shadow: var(--shadow-1), 0 0 0 1px var(--line-soft) !important;
   overflow: hidden;
 }
 
@@ -1493,12 +1503,6 @@ textarea {
 
 .maplibregl-ctrl-group button:hover {
   background: var(--surface-3) !important;
-}
-
-/* Control icons only; the basemap itself is never filtered. */
-.maplibregl-ctrl-icon,
-.maplibregl-ctrl-attrib-button {
-  filter: invert(1);
 }
 
 .maplibregl-ctrl-top-right,
@@ -1602,7 +1606,7 @@ textarea {
   }
 
   .chip-row .chip.is-on {
-    background: color-mix(in srgb, var(--purple) 30%, var(--surface-1));
+    background: color-mix(in srgb, var(--purple) 12%, var(--surface-1));
   }
 
   .chip-divider {
@@ -1621,7 +1625,7 @@ textarea {
     background: var(--glass);
     -webkit-backdrop-filter: blur(14px) saturate(1.2);
     backdrop-filter: blur(14px) saturate(1.2);
-    border: 1px solid var(--line-2);
+    border: 1px solid var(--line-soft);
     border-bottom: 0;
     box-shadow: var(--shadow-2), var(--edge);
     /* Collapsed: only the handle and peek row stay on screen. */
@@ -1745,6 +1749,21 @@ textarea {
 
   .sheet-handle {
     height: 28px;
+  }
+}
+
+/* Windows High Contrast and other forced-colour modes drop backgrounds, which
+ * were the only cue for a selected score or chip. Give them an outline. */
+@media (forced-colors: active) {
+  .segmented label:has(input:checked),
+  .chip.is-on,
+  .result-list button.selected {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+
+  .rank {
+    border: 1px solid CanvasText;
   }
 }
 

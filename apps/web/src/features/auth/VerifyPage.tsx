@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../lib/auth.tsx";
+import { useDocumentTitle } from "../../lib/useDocumentTitle.ts";
 
 export function VerifyPage() {
   const [params] = useSearchParams();
@@ -9,6 +10,7 @@ export function VerifyPage() {
   const token = params.get("token");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  useDocumentTitle("Sign in");
 
   useEffect(() => {
     if (!token) {

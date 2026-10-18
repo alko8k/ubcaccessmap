@@ -1,4 +1,7 @@
+import { useDocumentTitle } from "../lib/useDocumentTitle.ts";
+
 export function AboutPage() {
+  useDocumentTitle("About");
   return (
     <main className="page prose">
       <p className="eyebrow">About</p>
