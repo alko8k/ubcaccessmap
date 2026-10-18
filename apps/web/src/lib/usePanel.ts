@@ -1,14 +1,12 @@
 import { useEffect, useRef, type RefObject } from "react";
 
-const NARROW = "(max-width: 900px)";
-
 /**
- * Behaviour shared by the side panels.
+ * Behaviour shared by the building and washroom panels.
  *
  * When `openKey` changes, focus moves to the panel so keyboard and screen
  * reader users land on what they just opened instead of staying on the map or
- * list. On narrow screens the panel renders below the map, so it is also
- * scrolled into view — otherwise tapping a marker looks like it did nothing.
+ * list. The panel floats over the map at every size, so focusing it never
+ * needs to scroll the page.
  *
  * Escape closes the panel, unless the key press happened inside a dialog,
  * which handles Escape itself.
@@ -25,15 +23,7 @@ export function usePanel(
   }, [onClose]);
 
   useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) {
-      return;
-    }
-    const narrow = window.matchMedia?.(NARROW).matches ?? false;
-    panel.focus({ preventScroll: !narrow });
-    if (narrow) {
-      panel.scrollIntoView({ block: "start" });
-    }
+    panelRef.current?.focus({ preventScroll: true });
   }, [panelRef, openKey]);
 
   useEffect(() => {

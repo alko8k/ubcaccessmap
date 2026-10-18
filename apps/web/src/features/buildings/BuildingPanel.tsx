@@ -1,7 +1,9 @@
 import { useRef } from "react";
+import { ChevronRight, Clock, X } from "lucide-react";
 import type { BuildingSummary, WashroomSummary } from "@ubc-access-map/shared";
 import { factLabel, genderLabel } from "../../lib/filters.ts";
 import { usePanel } from "../../lib/usePanel.ts";
+import { FactIcon } from "../washrooms/FactIcon.tsx";
 
 type Props = {
   building: BuildingSummary;
@@ -57,33 +59,45 @@ export function BuildingPanel({
 
   return (
     <section className="panel" aria-labelledby="building-heading" tabIndex={-1} ref={panelRef}>
-      <div className="panel-head">
-        <p className="eyebrow">{building.code ?? "Building"}</p>
-        <button type="button" className="text-btn panel-close" onClick={onClose} aria-label="Close building">
-          Close
+      <header className="panel-head">
+        <p className="eyebrow">{building.code ? `Building · ${building.code}` : "Building"}</p>
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close building">
+          <X aria-hidden="true" size={18} />
         </button>
-      </div>
+      </header>
 
       <div className="panel-body">
-        <h2 id="building-heading">{building.name}</h2>
-        <p className="meta">
-          {building.washroomCount} washroom{building.washroomCount === 1 ? "" : "s"}
-          {building.hours ? ` · ${building.hours}` : ""}
-        </p>
-
-        <ul className="fact-list">
+        <h2 id="building-heading" className="panel-title">
+          {building.name}
+        </h2>
+        <ul className="meta-chips" aria-label="Details">
           <li>
-            <span>Step-free building access</span>
-            <b data-state={building.stepFreeAccess}>{factLabel(building.stepFreeAccess)}</b>
+            {building.washroomCount} washroom{building.washroomCount === 1 ? "" : "s"}
+          </li>
+          {building.hours && (
+            <li>
+              <Clock aria-hidden="true" size={14} />
+              {building.hours}
+            </li>
+          )}
+        </ul>
+
+        <ul className="fact-grid">
+          <li data-state={building.stepFreeAccess}>
+            <span className="fact-name">Step-free building access</span>
+            <span className="fact-state">
+              <FactIcon value={building.stepFreeAccess} />
+              {factLabel(building.stepFreeAccess)}
+            </span>
           </li>
         </ul>
 
         {building.washroomCount === 0 ? (
-          <p className="hint">
-            No washrooms are mapped in this building yet. Verified UBC accounts can add them.
+          <p className="empty-note">
+            No washrooms are mapped in this building yet.
           </p>
         ) : washrooms.length === 0 ? (
-          <p className="hint">
+          <p className="empty-note">
             All {building.washroomCount} washroom{building.washroomCount === 1 ? "" : "s"} in this
             building are hidden by your current filters.
           </p>
@@ -96,9 +110,9 @@ export function BuildingPanel({
             )}
 
             {floors.map(([floor, floorWashrooms]) => (
-              <section className="panel-section" key={floor}>
-                <h3 className="group-label">Floor {floor}</h3>
-                <ul className="result-list result-list--panel">
+              <section className="floor-group" key={floor}>
+                <h3 className="floor-title">Floor {floor}</h3>
+                <ul className="result-list">
                   {floorWashrooms.map((washroom) => (
                     <li key={washroom.id}>
                       <button
@@ -109,10 +123,11 @@ export function BuildingPanel({
                         <span className={`rank rank-${washroom.rankLetter ?? "none"}`}>
                           {washroom.rankLetter ?? "—"}
                         </span>
-                        <span>
+                        <span className="row-text">
                           <strong>{washroom.name}</strong>
                           <em>{genderLabel(washroom.genderType)}</em>
                         </span>
+                        <ChevronRight aria-hidden="true" size={16} className="row-chevron" />
                       </button>
                     </li>
                   ))}

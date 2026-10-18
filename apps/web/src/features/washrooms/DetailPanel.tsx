@@ -1,10 +1,13 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Clock, Flag, Layers, ShieldCheck, Users, X } from "lucide-react";
 import { RATING_TAGS, type UpsertRatingInput } from "@ubc-access-map/shared";
 import { createReport, fetchWashroom, upsertRating } from "../../api/client.ts";
 import { factLabel, genderLabel, tagLabel } from "../../lib/filters.ts";
 import { useAuth } from "../../lib/auth.tsx";
 import { usePanel } from "../../lib/usePanel.ts";
+import { FactIcon } from "./FactIcon.tsx";
+import { RatingControl } from "./RatingControl.tsx";
 
 const attributeLabels: Record<string, string> = {
   stepFreeBuildingAccess: "Step-free building access",
@@ -72,23 +75,29 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
 
   return (
     <section className="panel" aria-labelledby="washroom-heading" tabIndex={-1} ref={panelRef}>
-      <div className="panel-head">
+      <header className="panel-head">
         <p className="eyebrow">
           {washroom
             ? `${washroom.buildingName}${washroom.buildingCode ? ` · ${washroom.buildingCode}` : ""}`
             : "Washroom"}
         </p>
-        <button type="button" className="text-btn panel-close" onClick={onClose} aria-label="Close details">
-          Close
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close details">
+          <X aria-hidden="true" size={18} />
         </button>
-      </div>
+      </header>
 
       <div className="panel-body">
-        {detailQuery.isLoading && <p>Loading washroom details…</p>}
+        {detailQuery.isLoading && (
+          <div className="panel-loading" aria-label="Loading washroom details">
+            <span className="skeleton skeleton--title" />
+            <span className="skeleton skeleton--text" />
+            <span className="skeleton skeleton--block" />
+          </div>
+        )}
         {detailQuery.isError && (
           <div role="alert" className="notice notice--error">
             <p>Couldn’t load that washroom.</p>
-            <button type="button" onClick={() => void detailQuery.refetch()}>
+            <button type="button" className="btn" onClick={() => void detailQuery.refetch()}>
               Try again
             </button>
           </div>
@@ -96,22 +105,36 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
 
         {washroom && (
           <>
-            <h2 id="washroom-heading">{washroom.name}</h2>
-            <p className="meta">
-              Floor {washroom.floor} · {genderLabel(washroom.genderType)}
-              {washroom.hours ? ` · ${washroom.hours}` : ""}
-            </p>
-            <p className="directions">{washroom.directions}</p>
+            <h2 id="washroom-heading" className="panel-title">
+              {washroom.name}
+            </h2>
+            <ul className="meta-chips" aria-label="Details">
+              <li>
+                <Layers aria-hidden="true" size={14} />
+                Floor {washroom.floor}
+              </li>
+              <li>
+                <Users aria-hidden="true" size={14} />
+                {genderLabel(washroom.genderType)}
+              </li>
+              {washroom.hours && (
+                <li>
+                  <Clock aria-hidden="true" size={14} />
+                  {washroom.hours}
+                </li>
+              )}
+            </ul>
+            {washroom.directions && <p className="directions">{washroom.directions}</p>}
 
-            <div className="rank-box">
+            <div className="card rank-card">
               <strong className={`rank rank-large rank-${washroom.rankLetter ?? "none"}`}>
                 {washroom.rankLetter ?? "—"}
               </strong>
-              <div>
-                <p>Community experience rank</p>
-                <p>
-                  {washroom.voteCount} vote{washroom.voteCount === 1 ? "" : "s"} · {washroom.confidence}{" "}
-                  confidence
+              <div className="rank-card-text">
+                <p className="rank-card-title">Community rank</p>
+                <p className="rank-card-meta">
+                  {washroom.voteCount} vote{washroom.voteCount === 1 ? "" : "s"} ·{" "}
+                  {washroom.confidence} confidence
                 </p>
                 <div
                   className="tier-meter"
@@ -123,34 +146,44 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
                 >
                   <i style={{ width: `${Math.min(washroom.voteCount / 10, 1) * 100}%` }} />
                 </div>
-                <p className="hint">
-                  Rank is Bayesian-weighted so a single vote cannot produce an S. It is not an
-                  accessibility rating.
-                </p>
               </div>
             </div>
+            <p className="hint">
+              Ranks come from votes and are weighted so one vote can’t make an S. They are not an
+              accessibility rating.
+            </p>
 
-            <section className="panel-section">
-              <h3 className="group-label">Accessibility facts</h3>
-              <ul className="fact-list">
+            <section className="panel-section" aria-labelledby="facts-heading">
+              <h3 id="facts-heading" className="section-title">
+                <ShieldCheck aria-hidden="true" size={16} />
+                Accessibility facts
+              </h3>
+              <ul className="fact-grid">
                 {washroom.attributes.map((attribute) => (
-                  <li key={attribute.key}>
-                    <span>{attributeLabels[attribute.key] ?? attribute.key}</span>
-                    <b data-state={attribute.value}>{factLabel(attribute.value)}</b>
+                  <li key={attribute.key} data-state={attribute.value}>
+                    <span className="fact-name">
+                      {attributeLabels[attribute.key] ?? attribute.key}
+                    </span>
+                    <span className="fact-state">
+                      <FactIcon value={attribute.value} />
+                      {factLabel(attribute.value)}
+                    </span>
                   </li>
                 ))}
               </ul>
               <p className="hint">
-                Source: {washroom.attributeSource ?? "Not recorded"}
+                Source: {washroom.attributeSource ?? "not recorded"}
                 {washroom.lastVerifiedAt
-                  ? ` · last verified ${new Date(washroom.lastVerifiedAt).toLocaleDateString()}`
+                  ? ` · verified ${new Date(washroom.lastVerifiedAt).toLocaleDateString()}`
                   : ""}
-                . Unknown means we have not confirmed it.
+                . Unknown means it hasn’t been confirmed yet.
               </p>
             </section>
 
-            <section className="panel-section">
-              <h3 className="group-label">Vote</h3>
+            <section className="panel-section" aria-labelledby="vote-heading">
+              <h3 id="vote-heading" className="section-title">
+                {washroom.viewerRating ? "Update your vote" : "Rate this washroom"}
+              </h3>
               {user ? (
                 <form
                   className="vote-form"
@@ -159,48 +192,43 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
                     vote.mutate(rating);
                   }}
                 >
-                  <p className="hint">Rate each from 1 (poor) to 5 (great).</p>
+                  <p className="hint">1 is poor, 5 is great.</p>
                   {ratingFields.map(({ key, label }) => (
-                    <label key={key} className="rating-field">
-                      <span className="rating-label">
-                        {label}
-                        <output>{rating[key]} / 5</output>
-                      </span>
-                      <input
-                        type="range"
-                        min={1}
-                        max={5}
-                        value={rating[key]}
-                        aria-valuetext={`${rating[key]} out of 5`}
-                        onChange={(event) =>
-                          setRating({ ...rating, [key]: Number(event.target.value) })
-                        }
-                      />
-                    </label>
+                    <RatingControl
+                      key={key}
+                      label={label}
+                      value={rating[key]}
+                      onChange={(score) => setRating({ ...rating, [key]: score })}
+                    />
                   ))}
-                  <fieldset>
-                    <legend>Optional tags</legend>
-                    <div className="filter-checks">
-                      {RATING_TAGS.map((tag) => (
-                        <label key={tag} className="check">
-                          <input
-                            type="checkbox"
-                            checked={rating.tags.includes(tag)}
-                            onChange={(event) => {
-                              setRating({
-                                ...rating,
-                                tags: event.target.checked
-                                  ? [...rating.tags, tag]
-                                  : rating.tags.filter((value) => value !== tag),
-                              });
-                            }}
-                          />
-                          {tagLabel(tag)}
-                        </label>
-                      ))}
+                  <fieldset className="tag-field">
+                    <legend>Tags (optional)</legend>
+                    <div className="chip-wrap">
+                      {RATING_TAGS.map((tag) => {
+                        const on = rating.tags.includes(tag);
+                        return (
+                          <label key={tag} className={on ? "chip is-on" : "chip"}>
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={on}
+                              onChange={(event) => {
+                                setRating({
+                                  ...rating,
+                                  tags: event.target.checked
+                                    ? [...rating.tags, tag]
+                                    : rating.tags.filter((value) => value !== tag),
+                                });
+                              }}
+                            />
+                            {on && <Check aria-hidden="true" size={14} />}
+                            {tagLabel(tag)}
+                          </label>
+                        );
+                      })}
                     </div>
                   </fieldset>
-                  <button type="submit" className="primary" disabled={vote.isPending}>
+                  <button type="submit" className="btn btn--primary btn--block" disabled={vote.isPending}>
                     {vote.isPending
                       ? "Saving…"
                       : washroom.viewerRating
@@ -208,7 +236,7 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
                         : "Submit vote"}
                   </button>
                   {vote.isSuccess && (
-                    <p role="status" className="notice">
+                    <p role="status" className="notice notice--success">
                       Saved. You can update this vote any time.
                     </p>
                   )}
@@ -219,16 +247,20 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
                   )}
                 </form>
               ) : (
-                <p>
-                  <button type="button" className="primary" onClick={onNeedAuth}>
+                <div className="card cta-card">
+                  <p>Votes are limited to verified UBC emails, so ranks stay meaningful.</p>
+                  <button type="button" className="btn btn--primary" onClick={onNeedAuth}>
                     Verify a UBC email to vote
                   </button>
-                </p>
+                </div>
               )}
             </section>
 
-            <section className="panel-section">
-              <h3 className="group-label">Report a correction</h3>
+            <details className="panel-section disclosure">
+              <summary>
+                <Flag aria-hidden="true" size={16} />
+                Report a correction
+              </summary>
               <form
                 className="report-form"
                 onSubmit={(event) => {
@@ -240,39 +272,40 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
                   report.mutate();
                 }}
               >
-                <label>
-                  What is wrong?
+                <label className="field">
+                  <span>What’s wrong?</span>
                   <select value={reportType} onChange={(event) => setReportType(event.target.value)}>
-                    <option value="incorrect_access">Accessibility fact is wrong</option>
+                    <option value="incorrect_access">An accessibility fact is wrong</option>
                     <option value="closed">Closed or unavailable</option>
                     <option value="directions">Directions need an update</option>
-                    <option value="other">Other</option>
+                    <option value="other">Something else</option>
                   </select>
                 </label>
-                <label>
-                  Details
+                <label className="field">
+                  <span>Details</span>
                   <textarea
                     required
                     minLength={8}
                     value={reportMessage}
+                    placeholder="What did you see? The more specific, the faster it’s fixed."
                     onChange={(event) => setReportMessage(event.target.value)}
                   />
                 </label>
-                <button type="submit" disabled={report.isPending}>
+                <button type="submit" className="btn" disabled={report.isPending}>
                   {report.isPending ? "Sending…" : "Send report"}
                 </button>
+                {report.isSuccess && (
+                  <p role="status" className="notice notice--success">
+                    Thanks. A moderator will review that correction.
+                  </p>
+                )}
                 {report.isError && (
                   <p role="alert" className="notice notice--error">
                     {errorText(report.error, "Couldn’t send that report. Try again.")}
                   </p>
                 )}
               </form>
-              {report.isSuccess && (
-                <p role="status" className="notice">
-                  Thanks. A moderator will review that correction.
-                </p>
-              )}
-            </section>
+            </details>
           </>
         )}
       </div>

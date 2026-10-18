@@ -12,7 +12,6 @@ type Props = {
   selectedBuildingId?: string;
   onSelectWashroom: (id: string) => void;
   onSelectBuilding: (id: string) => void;
-  locateRequest: number;
   /** Called with a readable reason when the browser can't provide a position. */
   onLocateError: (message: string) => void;
 };
@@ -41,7 +40,6 @@ export function CampusMap({
   selectedBuildingId,
   onSelectWashroom,
   onSelectBuilding,
-  locateRequest,
   onLocateError,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -80,13 +78,22 @@ export function CampusMap({
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
-    map.addControl(
-      new maplibregl.GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        trackUserLocation: false,
-      }),
-      "top-right",
-    );
+    // The one locate button: it also draws the position dot on the map.
+    const geolocate = new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true, timeout: 10000 },
+      trackUserLocation: false,
+    });
+    geolocate.on("error", (error: GeolocationPositionError) => {
+      onLocateErrorRef.current(
+        error.code === error.PERMISSION_DENIED
+          ? "Location access is off. Allow it in your browser settings, or search for a building instead."
+          : "Couldn't find your location. Try again, or search for a building instead.",
+      );
+    });
+    geolocate.on("outofmaxbounds", () => {
+      onLocateErrorRef.current("You're outside the campus map, so there's nothing to show nearby.");
+    });
+    map.addControl(geolocate, "top-right");
 
     map.on("error", (event) => {
       console.error("[map]", event.error?.message ?? event);
@@ -261,34 +268,6 @@ export function CampusMap({
       }
     }
   }, [buildings, washrooms, selectedWashroomId, selectedBuildingId]);
-
-  useEffect(() => {
-    if (locateRequest === 0) {
-      return;
-    }
-    if (!navigator.geolocation) {
-      onLocateErrorRef.current("This browser can't share your location.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        mapRef.current?.flyTo({
-          center: [position.coords.longitude, position.coords.latitude],
-          zoom: 16.5,
-          essential: true,
-        });
-      },
-      (error) => {
-        onLocateErrorRef.current(
-          error.code === error.PERMISSION_DENIED
-            ? "Location access is off. Allow it in your browser settings, or search for a building instead."
-            : "Couldn't find your location. Try again, or search for a building instead.",
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  }, [locateRequest]);
 
   return (
     <div className="map-shell">

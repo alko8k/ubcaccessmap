@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useAuth } from "../../lib/auth.tsx";
 
 export function VerifyPage() {
@@ -31,16 +32,35 @@ export function VerifyPage() {
   }, [token, verify]);
 
   return (
-    <main className="page">
-      <h1>Signing you in</h1>
+    <main className="page status-page">
       {done && (
-        <p>
-          You are verified. <Link to="/">Back to the map</Link>
-        </p>
+        <>
+          <CircleCheck aria-hidden="true" size={36} className="status-icon status-icon--ok" />
+          <h1>You’re signed in</h1>
+          <p>Your UBC email is verified, so you can vote on washrooms now.</p>
+          <Link to="/" className="btn btn--primary">
+            Back to the map
+          </Link>
+        </>
       )}
-      {!token && <p role="alert">That sign-in link is missing a token.</p>}
-      {error && <p role="alert">{error}</p>}
-      {token && !done && !error && <p>Checking your magic link…</p>}
+      {(!token || error) && (
+        <>
+          <CircleAlert aria-hidden="true" size={36} className="status-icon status-icon--error" />
+          <h1>That link didn’t work</h1>
+          <p role="alert">{error ?? "That sign-in link is missing a token."}</p>
+          <p className="hint">Links work once and expire after 15 minutes.</p>
+          <Link to="/?signin=1" className="btn btn--primary">
+            Send a new link
+          </Link>
+        </>
+      )}
+      {token && !done && !error && (
+        <>
+          <LoaderCircle aria-hidden="true" size={36} className="status-icon spin" />
+          <h1>Signing you in…</h1>
+          <p>Checking your link.</p>
+        </>
+      )}
     </main>
   );
 }
