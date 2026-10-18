@@ -17,7 +17,7 @@ export const RANK_COLORS: Record<RankLetter, string> = {
   D: "#e35459",
 };
 
-export const UNRANKED_COLOR = "#868395";
+export const UNRANKED_COLOR = "#7e8693";
 
 /** The letter colour on every rank fill. */
 export const RANK_INK = "#14111c";

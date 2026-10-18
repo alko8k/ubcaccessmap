@@ -20,7 +20,7 @@ type Props = {
  * Paint a colour straight off a feature's `rank` property.
  *
  * Buildings, badges, and washroom dots all read from this, so a tier looks the
- * same wherever it appears. Purple stays on the interface chrome only.
+ * same wherever it appears. The blue accent stays on the interface chrome only.
  */
 const rankMatch: unknown[] = [
   "match",
@@ -122,10 +122,10 @@ export function CampusMap({
           "fill-opacity": [
             "case",
             ["==", ["get", "selected"], 1],
-            0.42,
+            0.45,
             ["==", ["get", "mapped"], 1],
-            0.18,
-            0.05,
+            0.28,
+            0.14,
           ],
         },
       });
@@ -137,15 +137,17 @@ export function CampusMap({
           // Outline carries the rating, so a building's tier reads from its
           // own edge without having to find the badge.
           "line-color": rankMatch as never,
-          "line-width": ["case", ["==", ["get", "selected"], 1], 2.8, 1.4],
-          "line-opacity": [
+          // Every campus building gets a full-strength edge (3:1 against the
+          // ground) so it stands apart from the quieter basemap buildings.
+          "line-width": [
             "case",
             ["==", ["get", "selected"], 1],
-            1,
+            3,
             ["==", ["get", "mapped"], 1],
-            0.9,
-            0.35,
+            2,
+            1.5,
           ],
+          "line-opacity": ["case", ["==", ["get", "selected"], 1], 1, 0.95],
         },
       });
       // Tier badge: a coloured medal sitting on each building.

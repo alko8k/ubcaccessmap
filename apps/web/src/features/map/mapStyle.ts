@@ -12,8 +12,9 @@ const GLYPHS = "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf";
  * basemap down to ground, water, green space, roads, and building shapes — no
  * POIs, no road names, no boundaries. The only text on the map is ours.
  *
- * The basemap stays quiet (low contrast) so the rank-coloured buildings and
- * badges, each 3:1 or better against the ground, are what stands out.
+ * Two levels of building: every OSM building gets a soft fill and outline so
+ * the campus reads at a glance, and the app's own buildings (drawn on top in
+ * CampusMap) get a full-strength edge, 3:1 against the ground.
  */
 /** Outline around badges and washroom dots, separating them from the map. */
 export const MAP_HALO = "#ffffff";
@@ -28,14 +29,14 @@ export const campusStyle: StyleSpecification = {
     {
       id: "background",
       type: "background",
-      paint: { "background-color": "#eeecf2" },
+      paint: { "background-color": "#e9edf3" },
     },
     {
       id: "green",
       type: "fill",
       source: "openmaptiles",
       "source-layer": "park",
-      paint: { "fill-color": "#dfe9da" },
+      paint: { "fill-color": "#d9e7d3" },
     },
     {
       id: "water",
@@ -43,7 +44,7 @@ export const campusStyle: StyleSpecification = {
       source: "openmaptiles",
       "source-layer": "water",
       filter: ["!=", ["get", "brunnel"], "tunnel"],
-      paint: { "fill-color": "#cddcea" },
+      paint: { "fill-color": "#c5d8ea" },
     },
     {
       id: "buildings",
@@ -51,7 +52,18 @@ export const campusStyle: StyleSpecification = {
       source: "openmaptiles",
       "source-layer": "building",
       minzoom: 13,
-      paint: { "fill-color": "#dedae6" },
+      paint: { "fill-color": "#d3d9e3" },
+    },
+    {
+      id: "building-outlines",
+      type: "line",
+      source: "openmaptiles",
+      "source-layer": "building",
+      minzoom: 14,
+      paint: {
+        "line-color": "#a3acba",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 14, 0.4, 18, 1.2],
+      },
     },
     {
       id: "roads-minor",
@@ -78,7 +90,7 @@ export const campusStyle: StyleSpecification = {
         false,
       ],
       paint: {
-        "line-color": "#fbfaff",
+        "line-color": "#ffffff",
         "line-width": ["interpolate", ["linear"], ["zoom"], 10, 0.8, 18, 10],
       },
     },

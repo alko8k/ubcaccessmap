@@ -7,33 +7,32 @@
 :root {
   color-scheme: light;
 
-  /* Light ground, purple accent. Neutrals carry a slight violet cast so the
-   * accent reads as part of the palette rather than a sticker on grey.
-   * Every text pair below is WCAG AA (4.5:1) or better on every surface it
-   * sits on; ratios are against --surface-1 unless noted. */
-  --surface-0: #f4f2f8; /* page */
+  /* Light ground, blue accent. Neutrals are a cool slate so they sit with the
+   * accent. Every text pair below is WCAG AA (4.5:1) or better on every
+   * surface it sits on; ratios are against --surface-1 unless noted. */
+  --surface-0: #f3f5f9; /* page */
   --surface-1: #ffffff; /* cards */
-  --surface-2: #f8f6fc; /* raised blocks inside cards */
-  --surface-3: #efebf7; /* hover */
+  --surface-2: #f7f9fc; /* raised blocks inside cards */
+  --surface-3: #eef2f7; /* hover */
   /* Floating chrome over the map. 90% opaque keeps text at AA over anything
    * the map can draw underneath, including a selected D-rank building. */
   --glass: rgb(255 255 255 / 0.9);
 
-  --ink: #1b1626; /* 17.7:1 */
-  --ink-2: #4a4458; /* 9.3:1 */
-  --ink-3: #5d576d; /* 6.9:1; 5.3:1 on a selected chip, the lowest pair */
-  --line: #e6e2ef; /* decorative dividers only */
+  --ink: #0f172a; /* 17.9:1 */
+  --ink-2: #3f4a5c; /* 9:1 */
+  --ink-3: #536071; /* 6.4:1; 5:1 on a selected chip, the lowest pair */
+  --line: #e3e8ef; /* decorative dividers only */
   /* Borders that identify a control (inputs) need 3:1 (WCAG 1.4.11). */
-  --line-2: #847e98; /* 3.7:1 on white, 3.3:1 on --surface-0 */
-  --line-soft: #d9d4e4; /* borders of things already identified by text */
+  --line-2: #7a8394; /* 3.8:1 on white, 3.5:1 on --surface-0 */
+  --line-soft: #d3dae4; /* borders of things already identified by text */
 
-  /* The accent. Purple means interactive: links, focus, selection, and the
-   * clickable building outlines on the map. It never encodes rank. */
-  --purple: #6d28d9; /* 7.1:1; white on it is 7.1:1 */
-  --purple-bright: #5b21b6; /* hover and accent text, 9:1 */
-  --purple-dim: #a78bdb; /* decorative hover borders */
-  --purple-tint: color-mix(in srgb, var(--purple) 9%, white);
-  --on-purple: #ffffff;
+  /* The accent. Blue means interactive: links, focus, selection. It never
+   * encodes rank, and no rank colour is blue. */
+  --accent: #1d4ed8; /* 6.7:1; white on it is 6.7:1 */
+  --accent-strong: #1e40af; /* hover and accent text, 8.7:1 */
+  --accent-dim: #93b4f5; /* decorative hover borders */
+  --accent-tint: color-mix(in srgb, var(--accent) 9%, white);
+  --on-accent: #ffffff;
   --danger: #b42318; /* 6.6:1 */
 
   /* Tier ramp: red (D) through green (S). Mirrors lib/ranks.ts.
@@ -44,7 +43,7 @@
   --rank-B: #a58007;
   --rank-C: #d46611;
   --rank-D: #e35459;
-  --rank-none: #868395;
+  --rank-none: #7e8693;
   --rank-ink: #14111c;
 
   /* Shape and depth. */
@@ -52,8 +51,8 @@
   --r-md: 12px;
   --r-lg: 16px;
   --r-pill: 999px;
-  --shadow-1: 0 1px 2px rgb(28 20 50 / 0.08), 0 2px 8px rgb(28 20 50 / 0.06);
-  --shadow-2: 0 2px 6px rgb(28 20 50 / 0.08), 0 12px 32px rgb(28 20 50 / 0.12);
+  --shadow-1: 0 1px 2px rgb(15 23 42 / 0.08), 0 2px 8px rgb(15 23 42 / 0.06);
+  --shadow-2: 0 2px 6px rgb(15 23 42 / 0.08), 0 12px 32px rgb(15 23 42 / 0.12);
   --edge: 0 0 0 0 transparent;
 
   /* Type scale. */
@@ -124,13 +123,13 @@ textarea {
 }
 
 a {
-  color: var(--purple);
+  color: var(--accent);
   text-underline-offset: 3px;
-  text-decoration-color: var(--purple-dim);
+  text-decoration-color: var(--accent-dim);
 }
 
 a:hover {
-  text-decoration-color: var(--purple-bright);
+  text-decoration-color: var(--accent-strong);
 }
 
 code {
@@ -141,7 +140,7 @@ code {
 }
 
 :focus-visible {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -169,8 +168,8 @@ code {
   z-index: 50;
   padding: 0.5rem 0.9rem;
   border-radius: var(--r-sm);
-  background: var(--purple);
-  color: var(--on-purple);
+  background: var(--accent);
+  color: var(--on-accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -216,7 +215,7 @@ code {
 
 .btn:hover {
   background: var(--surface-3);
-  border-color: var(--purple-dim);
+  border-color: var(--accent-dim);
 }
 
 .btn:active {
@@ -224,16 +223,16 @@ code {
 }
 
 .btn--primary {
-  background: var(--purple);
-  border-color: var(--purple);
-  color: var(--on-purple);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
   font-weight: 650;
 }
 
 .btn--primary:hover {
-  background: var(--purple-bright);
-  border-color: var(--purple-bright);
-  color: var(--on-purple);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--on-accent);
 }
 
 .btn--ghost {
@@ -306,15 +305,15 @@ textarea {
 input:not([type="checkbox"], [type="radio"]):hover,
 select:hover,
 textarea:hover {
-  border-color: var(--purple-dim);
+  border-color: var(--accent-dim);
 }
 
 input:not([type="checkbox"], [type="radio"]):focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: var(--purple);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 30%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 ::placeholder {
@@ -364,23 +363,23 @@ textarea {
 }
 
 .chip:hover {
-  border-color: var(--purple-dim);
+  border-color: var(--accent-dim);
   color: var(--ink);
 }
 
 .chip.is-on {
-  background: color-mix(in srgb, var(--purple) 12%, var(--surface-2));
-  border-color: var(--purple);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  border-color: var(--accent);
   color: var(--ink);
 }
 
 .chip.is-on svg {
-  color: var(--purple);
+  color: var(--accent);
 }
 
 /* The hidden checkbox inside a chip still takes focus; show it on the chip. */
 .chip:has(input:focus-visible) {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -408,7 +407,7 @@ textarea {
 }
 
 .chip--select:has(select:focus-visible) {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -468,8 +467,8 @@ textarea {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--purple);
-  color: var(--on-purple);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .topbar nav {
@@ -525,8 +524,8 @@ textarea {
   width: 24px;
   height: 24px;
   border-radius: var(--r-pill);
-  background: var(--purple-tint);
-  color: var(--purple-bright);
+  background: var(--accent-tint);
+  color: var(--accent-strong);
   font-size: var(--fs-xs);
   font-weight: 700;
 }
@@ -777,8 +776,8 @@ textarea {
 }
 
 .result-list button.selected {
-  background: var(--purple-tint);
-  border-color: color-mix(in srgb, var(--purple) 45%, transparent);
+  background: var(--accent-tint);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .row-text {
@@ -1094,7 +1093,7 @@ textarea {
 }
 
 .section-title svg {
-  color: var(--purple-bright);
+  color: var(--accent-strong);
 }
 
 .fact-grid {
@@ -1130,7 +1129,7 @@ textarea {
 
 /* Yes and No are both facts: full strength. Unknown recedes. */
 .fact-grid li[data-state="yes"] .fact-state svg {
-  color: var(--purple);
+  color: var(--accent);
 }
 
 .fact-grid li[data-state="unknown"] {
@@ -1199,12 +1198,12 @@ textarea {
 }
 
 .segmented label:has(input:checked) {
-  background: var(--purple);
-  color: var(--on-purple);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .segmented label:has(input:focus-visible) {
-  outline: 2px solid var(--purple);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -1273,7 +1272,7 @@ textarea {
 }
 
 .notice--success {
-  border-color: color-mix(in srgb, var(--purple) 50%, var(--line-2));
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line-2));
   color: var(--ink);
 }
 
@@ -1327,7 +1326,7 @@ textarea {
 }
 
 .dialog::backdrop {
-  background: rgb(20 14 35 / 0.35);
+  background: rgb(15 23 42 / 0.35);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -1348,8 +1347,8 @@ textarea {
   height: 44px;
   margin-bottom: 0.9rem;
   border-radius: var(--r-md);
-  background: var(--purple-tint);
-  color: var(--purple-bright);
+  background: var(--accent-tint);
+  color: var(--accent-strong);
 }
 
 .dialog-lede {
@@ -1412,7 +1411,7 @@ textarea {
 
 .status-icon {
   margin-bottom: 0.75rem;
-  color: var(--purple-bright);
+  color: var(--accent-strong);
 }
 
 .status-icon--error {
@@ -1466,8 +1465,8 @@ textarea {
 }
 
 .badge--open {
-  border-color: var(--purple);
-  color: var(--purple-bright);
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .footer {
@@ -1606,7 +1605,7 @@ textarea {
   }
 
   .chip-row .chip.is-on {
-    background: color-mix(in srgb, var(--purple) 12%, var(--surface-1));
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-1));
   }
 
   .chip-divider {
