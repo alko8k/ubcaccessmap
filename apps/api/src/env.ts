@@ -13,10 +13,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+  // Left undefined when unset so the cookie falls back to secure-in-production.
   COOKIE_SECURE: z
     .enum(["true", "false"])
     .optional()
-    .transform((value) => value === "true"),
+    .transform((value) => (value === undefined ? undefined : value === "true")),
 });
 
 export type Env = z.infer<typeof envSchema>;

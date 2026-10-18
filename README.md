@@ -92,7 +92,7 @@ These are set in `apps/api/.env` locally and in the project settings on Vercel.
 | `SESSION_SECRET` | yes | At least 16 characters. Use a fresh value per environment. |
 | `NODE_ENV` | | `development` (default), `test`, or `production`. |
 | `WEB_ORIGIN` / `API_ORIGIN` | | Default to `http://localhost:5173` and `http://localhost:4000`. Set both to the deployed origin in production. |
-| `COOKIE_SECURE` | | Set to `true` in production. |
+| `COOKIE_SECURE` | | `true` or `false`. If unset, the session cookie is secure in production and not in development. |
 | `ADMIN_EMAILS` | | Comma-separated emails that get admin access. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | production | Used to send magic links. Defaults to Gmail SMTP on port 465. Sign-in won't work in production without these. |
 

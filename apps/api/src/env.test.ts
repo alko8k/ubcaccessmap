@@ -16,4 +16,16 @@ describe("loadEnv", () => {
 
     expect(adminEmails(env)).toEqual(new Set(["one@ubc.ca", "two@ubc.ca"]));
   });
+
+  it("leaves COOKIE_SECURE undefined when unset so the production default applies", () => {
+    const base = {
+      NODE_ENV: "production",
+      DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+      SESSION_SECRET: "a-very-long-secret",
+    };
+
+    expect(loadEnv(base).COOKIE_SECURE).toBeUndefined();
+    expect(loadEnv({ ...base, COOKIE_SECURE: "true" }).COOKIE_SECURE).toBe(true);
+    expect(loadEnv({ ...base, COOKIE_SECURE: "false" }).COOKIE_SECURE).toBe(false);
+  });
 });
