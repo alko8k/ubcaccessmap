@@ -21,3 +21,10 @@ export function useMediaQuery(query: string): boolean {
     () => false,
   );
 }
+
+/** A one-off read for imperative code, such as camera moves. */
+export function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+}

@@ -4,7 +4,6 @@ export function AboutPage() {
   useDocumentTitle("About");
   return (
     <main className="page prose">
-      <p className="eyebrow">About</p>
       <h1>A washroom map that puts access facts first</h1>
       <p className="lede">
         A student-built campus directory for finding a washroom when you need one, with

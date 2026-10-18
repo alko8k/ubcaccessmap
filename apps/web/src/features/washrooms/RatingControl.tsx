@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
 
 const SCALE = [1, 2, 3, 4, 5] as const;
 
@@ -20,7 +20,9 @@ export function RatingControl({ label, value, onChange }: Props) {
   return (
     <fieldset className="rating">
       <legend>{label}</legend>
-      <div className="segmented">
+      <div className="segmented" style={{ "--value": value - 1 } as CSSProperties}>
+        {/* The highlight slides between scores instead of jumping. */}
+        <span className="segmented-indicator" aria-hidden="true" />
         {SCALE.map((score) => (
           <label key={score}>
             <input

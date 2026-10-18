@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from "maplibre-gl";
 import { UBC_CAMPUS, type BuildingSummary, type WashroomSummary } from "@ubc-access-map/shared";
 import { RANK_COLORS, RANK_INK, UNRANKED_COLOR } from "../../lib/ranks.ts";
+import { NARROW_QUERY, prefersReducedMotion } from "../../lib/useMediaQuery.ts";
 import { MAP_HALO, campusStyle } from "./mapStyle.ts";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -12,6 +13,11 @@ type Props = {
   selectedBuildingId?: string;
   onSelectWashroom: (id: string) => void;
   onSelectBuilding: (id: string) => void;
+  /** The building to highlight, from either a hovered list row or the map. */
+  hoveredBuildingId: string | null;
+  onHoverBuilding: (id: string | null) => void;
+  /** When set, the camera fits the matching buildings. */
+  searchQuery: string;
   /** Called with a readable reason when the browser can't provide a position. */
   onLocateError: (message: string) => void;
 };
@@ -33,6 +39,48 @@ const rankMatch: unknown[] = [
   UNRANKED_COLOR,
 ];
 
+/** Ranked buildings get a lettered badge; unranked ones a smaller hollow ring. */
+const RANKED: unknown[] = ["!=", ["get", "rank"], ""];
+const UNRANKED: unknown[] = ["==", ["get", "rank"], ""];
+const BADGE_LAYERS: Array<[string, unknown[]]> = [
+  ["building-badge-glow", RANKED],
+  ["building-badge", RANKED],
+  ["building-badge-letter", RANKED],
+  ["building-badge-unranked", UNRANKED],
+];
+
+const hovered = ["boolean", ["feature-state", "hover"], false] as never;
+
+/** Exponential ease-out: quick to respond, gentle to settle. */
+const easeOutExpo = (t: number) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+
+/**
+ * Padding that keeps a camera target inside the part of the map the floating
+ * cards don't cover. Measured from the DOM, so it follows the real layout.
+ */
+function visiblePadding(container: HTMLElement) {
+  const box = container.getBoundingClientRect();
+  const rect = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
+  const margin = 24;
+
+  if (window.matchMedia?.(NARROW_QUERY).matches) {
+    const top = (rect(".explore-top")?.bottom ?? box.top) - box.top + margin;
+    const cover = rect(".detail-card") ?? rect(".sheet");
+    const bottom = cover ? box.bottom - cover.top + margin : margin;
+    // Leave at least a sliver of map to aim at, even under a tall sheet.
+    return { top, bottom: Math.min(bottom, box.height - top - 80), left: margin, right: margin };
+  }
+
+  const explore = rect(".explore");
+  const detail = rect(".detail-card");
+  return {
+    top: margin,
+    bottom: margin,
+    left: explore ? explore.right - box.left + margin : margin,
+    right: detail ? box.right - detail.left + margin : margin,
+  };
+}
+
 export function CampusMap({
   buildings,
   washrooms,
@@ -40,6 +88,9 @@ export function CampusMap({
   selectedBuildingId,
   onSelectWashroom,
   onSelectBuilding,
+  hoveredBuildingId,
+  onHoverBuilding,
+  searchQuery,
   onLocateError,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -47,6 +98,8 @@ export function CampusMap({
   const onSelectRef = useRef(onSelectWashroom);
   const onSelectBuildingRef = useRef(onSelectBuilding);
   const onLocateErrorRef = useRef(onLocateError);
+  const onHoverRef = useRef(onHoverBuilding);
+  const hoverStateRef = useRef<string | null>(null);
 
   useEffect(() => {
     onSelectRef.current = onSelectWashroom;
@@ -59,6 +112,10 @@ export function CampusMap({
   useEffect(() => {
     onLocateErrorRef.current = onLocateError;
   }, [onLocateError]);
+
+  useEffect(() => {
+    onHoverRef.current = onHoverBuilding;
+  }, [onHoverBuilding]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -103,6 +160,7 @@ export function CampusMap({
       map.addSource("buildings", {
         type: "geojson",
         data: emptyCollection(),
+        promoteId: "id",
       });
       map.addSource("washrooms", {
         type: "geojson",
@@ -123,6 +181,8 @@ export function CampusMap({
             "case",
             ["==", ["get", "selected"], 1],
             0.45,
+            hovered,
+            0.4,
             ["==", ["get", "mapped"], 1],
             0.28,
             0.14,
@@ -143,6 +203,8 @@ export function CampusMap({
             "case",
             ["==", ["get", "selected"], 1],
             3,
+            hovered,
+            3,
             ["==", ["get", "mapped"], 1],
             2,
             1.5,
@@ -155,6 +217,7 @@ export function CampusMap({
         id: "building-badge-glow",
         type: "circle",
         source: "badges",
+        filter: RANKED as never,
         paint: {
           "circle-radius": ["case", ["==", ["get", "selected"], 1], 22, 16],
           "circle-color": rankMatch as never,
@@ -166,6 +229,7 @@ export function CampusMap({
         id: "building-badge",
         type: "circle",
         source: "badges",
+        filter: RANKED as never,
         paint: {
           "circle-radius": ["case", ["==", ["get", "selected"], 1], 15, 12],
           "circle-color": rankMatch as never,
@@ -177,6 +241,7 @@ export function CampusMap({
         id: "building-badge-letter",
         type: "symbol",
         source: "badges",
+        filter: RANKED as never,
         layout: {
           "text-field": ["get", "label"],
           "text-font": ["Noto Sans Bold"],
@@ -184,6 +249,20 @@ export function CampusMap({
           "text-allow-overlap": true,
         },
         paint: { "text-color": RANK_INK },
+      });
+      // Shape, not just colour, says "no rank yet": a small hollow ring with no
+      // letter, so the few ranked buildings are what stands out.
+      map.addLayer({
+        id: "building-badge-unranked",
+        type: "circle",
+        source: "badges",
+        filter: UNRANKED as never,
+        paint: {
+          "circle-radius": ["case", ["==", ["get", "selected"], 1], 9, 7],
+          "circle-color": MAP_HALO,
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": UNRANKED_COLOR,
+        },
       });
 
       // Individual washrooms only appear once a building is opened.
@@ -200,7 +279,7 @@ export function CampusMap({
       });
     });
 
-    for (const layer of ["building-badge", "building-badge-letter"]) {
+    for (const layer of ["building-badge", "building-badge-letter", "building-badge-unranked"]) {
       map.on("click", layer, (event) => {
         const id = event.features?.[0]?.properties?.id;
         if (typeof id === "string") {
@@ -222,11 +301,16 @@ export function CampusMap({
       }
     });
 
-    map.on("mouseenter", "building-fill", () => {
+    map.on("mousemove", "building-fill", (event) => {
       map.getCanvas().style.cursor = "pointer";
+      const id = event.features?.[0]?.properties?.id;
+      if (typeof id === "string" && id !== hoverStateRef.current) {
+        onHoverRef.current(id);
+      }
     });
     map.on("mouseleave", "building-fill", () => {
       map.getCanvas().style.cursor = "";
+      onHoverRef.current(null);
     });
 
     map.on("click", "washroom-dots", (event) => {
@@ -261,15 +345,105 @@ export function CampusMap({
 
     updateSources(map, buildings, washrooms, selectedWashroomId, selectedBuildingId);
 
-    for (const layer of ["building-badge-glow", "building-badge", "building-badge-letter"]) {
+    // The opened building shows its washroom dots instead of its badge.
+    for (const [layer, base] of BADGE_LAYERS) {
       if (map.getLayer(layer)) {
         map.setFilter(
           layer,
-          selectedBuildingId ? ["!=", ["get", "id"], selectedBuildingId] : null,
+          (selectedBuildingId
+            ? ["all", base, ["!=", ["get", "id"], selectedBuildingId]]
+            : base) as never,
         );
       }
     }
   }, [buildings, washrooms, selectedWashroomId, selectedBuildingId]);
+
+  // Mirror the shared hover state onto the map.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map?.getSource("buildings")) {
+      return;
+    }
+    const previous = hoverStateRef.current;
+    if (previous && previous !== hoveredBuildingId) {
+      map.setFeatureState({ source: "buildings", id: previous }, { hover: false });
+    }
+    if (hoveredBuildingId) {
+      map.setFeatureState({ source: "buildings", id: hoveredBuildingId }, { hover: true });
+    }
+    hoverStateRef.current = hoveredBuildingId;
+  }, [hoveredBuildingId, buildings]);
+
+  const dataReady = buildings.length > 0;
+
+  /*
+   * The focal motion: whatever is selected, from the list or the map, glides
+   * into the visible part of the map. Reduced motion jumps instead.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    const container = containerRef.current;
+    if (!map || !container || (!selectedBuildingId && !selectedWashroomId)) {
+      return;
+    }
+
+    let center: [number, number] | null = null;
+    let zoom = 16.5;
+    const washroom = washrooms.find((item) => item.id === selectedWashroomId);
+    if (washroom) {
+      const siblings = washrooms.filter((item) => item.buildingId === washroom.buildingId);
+      center = spread(washroom, siblings);
+      zoom = 17.5;
+    } else {
+      const building = buildings.find((item) => item.id === selectedBuildingId);
+      if (building) {
+        center = [building.centroidLng, building.centroidLat];
+      }
+    }
+    if (!center) {
+      return;
+    }
+
+    const camera = {
+      center,
+      zoom: Math.max(map.getZoom(), zoom),
+      padding: visiblePadding(container),
+    };
+    if (prefersReducedMotion()) {
+      map.jumpTo(camera);
+    } else {
+      map.easeTo({ ...camera, duration: 650, easing: easeOutExpo, essential: true });
+    }
+    // Move on a change of selection, or once data first arrives for a
+    // selection that came in with the URL; not on every data refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBuildingId, selectedWashroomId, dataReady]);
+
+  // Searching brings the matching buildings into view.
+  useEffect(() => {
+    const map = mapRef.current;
+    const container = containerRef.current;
+    const query = searchQuery.trim();
+    if (!map || !container || !query || buildings.length === 0 || selectedBuildingId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      const bounds = new maplibregl.LngLatBounds();
+      for (const building of buildings) {
+        bounds.extend([building.centroidLng, building.centroidLat]);
+      }
+      map.fitBounds(bounds, {
+        padding: visiblePadding(container),
+        maxZoom: 17,
+        duration: prefersReducedMotion() ? 0 : 650,
+        easing: easeOutExpo,
+        essential: true,
+      });
+    }, 300);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, buildings]);
 
   return (
     <div className="map-shell">

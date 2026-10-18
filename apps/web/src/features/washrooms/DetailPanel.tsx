@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, Flag, Layers, ShieldCheck, Users, X } from "lucide-react";
+import { ArrowLeft, Check, Clock, Flag, Layers, ShieldCheck, Users, X } from "lucide-react";
 import { RATING_TAGS, type UpsertRatingInput } from "@ubc-access-map/shared";
 import { createReport, fetchWashroom, upsertRating } from "../../api/client.ts";
 import { factLabel, genderLabel, tagLabel } from "../../lib/filters.ts";
 import { useAuth } from "../../lib/auth.tsx";
+import { prefersReducedMotion } from "../../lib/useMediaQuery.ts";
 import { usePanel } from "../../lib/usePanel.ts";
 import { FactIcon } from "./FactIcon.tsx";
 import { RatingControl } from "./RatingControl.tsx";
@@ -33,11 +34,14 @@ function errorText(error: unknown, fallback: string) {
 
 type Props = {
   washroomId: string;
+  /** Steps back to the washroom's building. Escape does the same. */
   onClose: () => void;
+  /** Closes the panel entirely. */
+  onDismiss: () => void;
   onNeedAuth: () => void;
 };
 
-export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
+export function DetailPanel({ washroomId, onClose, onDismiss, onNeedAuth }: Props) {
   const { user } = useAuth();
   const panelRef = useRef<HTMLElement | null>(null);
   usePanel(panelRef, washroomId, onClose);
@@ -76,17 +80,23 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
   return (
     <section className="panel" aria-labelledby="washroom-heading" tabIndex={-1} ref={panelRef}>
       <header className="panel-head">
-        <p className="eyebrow">
-          {washroom
-            ? `${washroom.buildingName}${washroom.buildingCode ? ` · ${washroom.buildingCode}` : ""}`
-            : "Washroom"}
-        </p>
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close details">
+        <button
+          type="button"
+          className="crumb"
+          onClick={onClose}
+          aria-label={`Back to ${washroom ? (washroom.buildingCode ?? washroom.buildingName) : "building"}`}
+        >
+          <ArrowLeft aria-hidden="true" size={16} />
+          <span>
+            {washroom ? (washroom.buildingCode ?? washroom.buildingName) : "Building"}
+          </span>
+        </button>
+        <button type="button" className="icon-btn" onClick={onDismiss} aria-label="Close details">
           <X aria-hidden="true" size={18} />
         </button>
       </header>
 
-      <div className="panel-body">
+      <div className="panel-body panel-enter">
         {detailQuery.isLoading && (
           <div className="panel-loading" aria-label="Loading washroom details">
             <span className="skeleton skeleton--title" />
@@ -127,25 +137,50 @@ export function DetailPanel({ washroomId, onClose, onNeedAuth }: Props) {
             {washroom.directions && <p className="directions">{washroom.directions}</p>}
 
             <div className="card rank-card">
-              <strong className={`rank rank-large rank-${washroom.rankLetter ?? "none"}`}>
+              {/* Re-keyed on each saved vote so the medal pulses as it updates. */}
+              <strong
+                key={`${washroom.rankLetter ?? "none"}-${washroom.voteCount}`}
+                className={`rank rank-large rank-${washroom.rankLetter ?? "none"}${vote.isSuccess ? " rank-pulse" : ""}`}
+              >
                 {washroom.rankLetter ?? "—"}
               </strong>
               <div className="rank-card-text">
                 <p className="rank-card-title">Community rank</p>
-                <p className="rank-card-meta">
-                  {washroom.voteCount} vote{washroom.voteCount === 1 ? "" : "s"} ·{" "}
-                  {washroom.confidence} confidence
-                </p>
-                <div
-                  className="tier-meter"
-                  role="progressbar"
-                  aria-label="Confidence in this rank"
-                  aria-valuemin={0}
-                  aria-valuemax={10}
-                  aria-valuenow={Math.min(washroom.voteCount, 10)}
-                >
-                  <i style={{ width: `${Math.min(washroom.voteCount / 10, 1) * 100}%` }} />
-                </div>
+                {washroom.voteCount === 0 ? (
+                  <p className="rank-card-meta">
+                    No votes yet.{" "}
+                    <button
+                      type="button"
+                      className="link-btn"
+                      onClick={() => {
+                        const target = document.getElementById("vote-heading");
+                        target?.scrollIntoView({
+                          block: "start",
+                          behavior: prefersReducedMotion() ? "auto" : "smooth",
+                        });
+                      }}
+                    >
+                      Be the first to rate it
+                    </button>
+                  </p>
+                ) : (
+                  <>
+                    <p className="rank-card-meta">
+                      {washroom.voteCount} vote{washroom.voteCount === 1 ? "" : "s"} ·{" "}
+                      {washroom.confidence} confidence
+                    </p>
+                    <div
+                      className="tier-meter"
+                      role="progressbar"
+                      aria-label="Confidence in this rank"
+                      aria-valuemin={0}
+                      aria-valuemax={10}
+                      aria-valuenow={Math.min(washroom.voteCount, 10)}
+                    >
+                      <i style={{ width: `${Math.min(washroom.voteCount / 10, 1) * 100}%` }} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <p className="hint">

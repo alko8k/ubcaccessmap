@@ -51,7 +51,6 @@ export function ModerationPage() {
 
   return (
     <main className="page">
-      <p className="eyebrow">Moderation</p>
       <h1>Reports</h1>
       {reportsQuery.isLoading && <p>Loading reports…</p>}
       {reportsQuery.isError && <p role="alert">Couldn’t load reports. Refresh to try again.</p>}

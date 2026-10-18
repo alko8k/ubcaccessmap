@@ -60,17 +60,18 @@ export function BuildingPanel({
   return (
     <section className="panel" aria-labelledby="building-heading" tabIndex={-1} ref={panelRef}>
       <header className="panel-head">
-        <p className="eyebrow">{building.code ? `Building · ${building.code}` : "Building"}</p>
+        <span className="panel-head-label">Building</span>
         <button type="button" className="icon-btn" onClick={onClose} aria-label="Close building">
           <X aria-hidden="true" size={18} />
         </button>
       </header>
 
-      <div className="panel-body">
+      <div className="panel-body panel-enter">
         <h2 id="building-heading" className="panel-title">
           {building.name}
         </h2>
         <ul className="meta-chips" aria-label="Details">
+          {building.code && <li>{building.code}</li>}
           <li>
             {building.washroomCount} washroom{building.washroomCount === 1 ? "" : "s"}
           </li>

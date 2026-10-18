@@ -24,4 +24,13 @@ describe("RatingControl", () => {
 
     expect(onChange).toHaveBeenCalledWith(5);
   });
+
+  it("positions the sliding highlight from the value", () => {
+    const { container } = render(
+      <RatingControl label="Overall" value={4} onChange={() => undefined} />,
+    );
+
+    const track = container.querySelector(".segmented") as HTMLElement;
+    expect(track.style.getPropertyValue("--value")).toBe("3");
+  });
 });

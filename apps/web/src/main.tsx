@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App.tsx";
 import { AuthProvider } from "./lib/auth.tsx";
-import "@fontsource-variable/inter";
+import "@fontsource-variable/atkinson-hyperlegible-next";
 import "./index.css";
 
 const queryClient = new QueryClient();

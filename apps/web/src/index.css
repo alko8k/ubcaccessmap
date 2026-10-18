@@ -65,11 +65,18 @@
 
   /* Minimum control height: 36px with a mouse, 44px on touch (below). */
   --target: 2.25rem;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Motion: exponential ease-out, quick to respond and gentle to settle.
+   * Exits run faster than entrances. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
   --gap: 12px;
 
-  font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Helvetica, Arial, sans-serif;
+  /* Atkinson Hyperlegible Next: drawn by the Braille Institute so similar
+   * letterforms (Il1, O0, rn/m) stay distinct for low-vision readers. */
+  font-family: "Atkinson Hyperlegible Next Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Helvetica, Arial, sans-serif;
   font-synthesis-weight: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -137,6 +144,16 @@ code {
   padding: 0.1em 0.35em;
   border-radius: 6px;
   background: var(--surface-3);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, white);
+  color: var(--ink);
+}
+
+input,
+textarea {
+  caret-color: var(--accent);
 }
 
 :focus-visible {
@@ -375,6 +392,14 @@ textarea {
 
 .chip.is-on svg {
   color: var(--accent);
+  animation: pop-in var(--dur-fast) var(--ease);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
 }
 
 /* The hidden checkbox inside a chip still takes focus; show it on the chip. */
@@ -775,6 +800,21 @@ textarea {
   background: var(--surface-3);
 }
 
+
+/* When the results change, rows settle in top-down. Capped at 8 rows, so the
+ * whole list lands within ~340ms; the first paint doesn't animate. */
+.result-list.is-refreshed > li {
+  animation: row-in 180ms var(--ease) both;
+  animation-delay: calc(var(--row, 0) * 20ms);
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0.2;
+    transform: translateY(6px);
+  }
+}
+
 .result-list button.selected {
   background: var(--accent-tint);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
@@ -952,10 +992,75 @@ textarea {
   border-bottom: 1px solid var(--line);
 }
 
-.panel-head .eyebrow {
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  min-height: 2.25rem;
+  margin-left: -0.6rem;
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+
+.crumb span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.crumb svg {
+  flex: none;
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.crumb:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.crumb:hover svg {
+  transform: translateX(-2px);
+}
+
+.panel-head-label {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  color: var(--accent-strong);
+}
+
+/* Switching washrooms crossfades the panel's content. */
+.panel-enter {
+  animation: fade-in var(--dur-fast) var(--ease);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .panel-body {
@@ -1045,6 +1150,14 @@ textarea {
   letter-spacing: 0.02em;
 }
 
+/* No rank yet: a hollow ring, so real ranks are what stands out. The shape
+ * carries the difference, not only the colour. */
+.rank-none {
+  background: var(--surface-1);
+  border: 1.5px solid var(--line-2);
+  color: var(--ink-3);
+}
+
 .rank-S { --tier: var(--rank-S); }
 .rank-A { --tier: var(--rank-A); }
 .rank-B { --tier: var(--rank-B); }
@@ -1060,6 +1173,22 @@ textarea {
   min-width: 3.25rem;
   height: 3.25rem;
   font-size: 1.4rem;
+}
+
+/* A saved vote lands: the medal settles in and a ring spreads out from it. */
+.rank-pulse {
+  animation: rank-land 520ms var(--ease);
+}
+
+@keyframes rank-land {
+  0% {
+    transform: scale(0.82);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--tier) 55%, transparent);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--tier) 0%, transparent);
+  }
 }
 
 .tier-meter {
@@ -1171,6 +1300,7 @@ textarea {
 
 /* 1–5 segmented control over a native radio group. */
 .segmented {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   padding: 3px;
@@ -1180,7 +1310,21 @@ textarea {
   background: var(--surface-0);
 }
 
+.segmented-indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px - 12px) / 5);
+  border-radius: 9px;
+  background: var(--accent);
+  transform: translateX(calc(var(--value, 2) * (100% + 3px)));
+  transition: transform var(--dur-base) var(--ease);
+}
+
 .segmented label {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   min-height: 2.25rem;
@@ -1197,8 +1341,9 @@ textarea {
   color: var(--ink);
 }
 
-.segmented label:has(input:checked) {
-  background: var(--accent);
+.segmented label:has(input:checked),
+.segmented label:has(input:checked):hover {
+  background: transparent;
   color: var(--on-accent);
 }
 
@@ -1265,6 +1410,10 @@ textarea {
   background: var(--surface-2);
   color: var(--ink-2);
   font-size: var(--fs-sm);
+}
+
+.notice {
+  animation: fade-in var(--dur-base) var(--ease);
 }
 
 .notice p:last-child {
@@ -1629,11 +1778,13 @@ textarea {
     box-shadow: var(--shadow-2), var(--edge);
     /* Collapsed: only the handle and peek row stay on screen. */
     transform: translateY(calc(100% - var(--peek) + var(--drag, 0px)));
-    transition: transform 280ms var(--ease);
+    /* Collapsing runs faster than opening. */
+    transition: transform var(--dur-base) var(--ease);
   }
 
   .sheet.is-expanded {
     transform: translateY(var(--drag, 0px));
+    transition-duration: var(--dur-slow);
   }
 
   .sheet.is-dragging {
@@ -1673,7 +1824,8 @@ textarea {
     right: 0;
     bottom: 0;
     width: auto;
-    max-height: 82svh;
+    /* Leaves the top of the map visible, where the camera puts the selection. */
+    max-height: 62svh;
     border-radius: var(--r-lg) var(--r-lg) 0 0;
     border-bottom: 0;
     animation: sheet-up 260ms var(--ease);
@@ -1766,10 +1918,45 @@ textarea {
   }
 }
 
+/* Reduced motion removes movement (slides, scales, the sliding highlight, the
+ * sheet's travel, looping pulses) but keeps fades and colour changes, so state
+ * changes stay visible. The map camera jumps instead of gliding (CampusMap). */
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
-    animation: none !important;
-    transition: none !important;
+  }
+
+  .result-list.is-refreshed > li,
+  .detail-card,
+  .toast,
+  .dialog[open] {
+    animation-name: fade-in !important;
+    animation-delay: 0ms !important;
+  }
+
+  .rank-pulse,
+  .chip.is-on svg,
+  .skeleton {
+    animation: none;
+  }
+
+  .sheet,
+  .sheet.is-expanded,
+  .segmented-indicator,
+  .row-chevron,
+  .crumb svg,
+  .maplibregl-ctrl-top-right,
+  .maplibregl-ctrl-bottom-right {
+    transition: none;
+  }
+
+  .btn:active,
+  .result-list button:hover .row-chevron,
+  .crumb:hover svg {
+    transform: none;
+  }
+
+  .spin {
+    animation-duration: 2.5s;
   }
 }

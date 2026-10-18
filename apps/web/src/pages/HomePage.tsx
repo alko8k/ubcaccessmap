@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { ChevronRight, MapPinOff, X } from "lucide-react";
@@ -29,6 +29,8 @@ export function HomePage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [locateMessage, setLocateMessage] = useState<string | null>(null);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  // Shared by list rows and the map so each highlights the other.
+  const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
   useDocumentTitle();
 
   const mapQuery = useQuery({
@@ -47,10 +49,16 @@ export function HomePage() {
     setParams(search);
   }
 
+  /*
+   * Selecting a washroom also selects its building, so the map can highlight
+   * it and fly there even when the washroom was picked from the list.
+   */
   function selectWashroom(id: string) {
     const search = new URLSearchParams(searchFromFilters(filters));
-    if (selectedBuildingId) {
-      search.set("building", selectedBuildingId);
+    const buildingId =
+      washrooms.find((washroom) => washroom.id === id)?.buildingId ?? selectedBuildingId;
+    if (buildingId) {
+      search.set("building", buildingId);
     }
     search.set("washroom", id);
     setParams(search);
@@ -101,11 +109,17 @@ export function HomePage() {
     .filter(Boolean)
     .join(" and ");
 
+  // Rows animate in when the results change, but not on the first paint.
+  const resultsKey = mapQueryString(filters);
+  const [firstResultsKey] = useState(resultsKey);
+  const refreshed = resultsKey !== firstResultsKey;
+
   const panel = selectedId ? (
     <DetailPanel
       key={selectedId}
       washroomId={selectedId}
       onClose={clearWashroom}
+      onDismiss={clearBuilding}
       onNeedAuth={() => setAuthOpen(true)}
     />
   ) : (
@@ -134,12 +148,16 @@ export function HomePage() {
           </p>
         )}
       </div>
-      <ul className="tier-legend" aria-label="Community rank tiers, best to worst">
+      <ul className="tier-legend" aria-label="Community rank tiers, best to worst, then not yet ranked">
         {TIERS.map((letter) => (
           <li key={letter} className={`rank rank-${letter}`}>
             {letter}
           </li>
         ))}
+        <li className="rank rank-none" title="Not yet ranked">
+          <span aria-hidden="true">–</span>
+          <span className="sr-only">Not yet ranked</span>
+        </li>
       </ul>
     </div>
   );
@@ -158,6 +176,9 @@ export function HomePage() {
         selectedBuildingId={selectedBuildingId}
         onSelectWashroom={selectWashroom}
         onSelectBuilding={selectBuilding}
+        hoveredBuildingId={hoveredBuildingId}
+        onHoverBuilding={setHoveredBuildingId}
+        searchQuery={filters.q}
         onLocateError={setLocateMessage}
       />
 
@@ -208,13 +229,23 @@ export function HomePage() {
               </div>
             )}
             {washrooms.length > 0 && (
-              <ul className="result-list">
-                {washrooms.map((washroom) => (
-                  <li key={washroom.id}>
+              <ul
+                key={resultsKey}
+                className={refreshed ? "result-list is-refreshed" : "result-list"}
+                onMouseLeave={() => setHoveredBuildingId(null)}
+              >
+                {washrooms.map((washroom, index) => (
+                  <li
+                    key={washroom.id}
+                    style={{ "--row": Math.min(index, 8) } as CSSProperties}
+                  >
                     <button
                       type="button"
                       className={washroom.id === selectedId ? "selected" : undefined}
                       onClick={() => selectWashroom(washroom.id)}
+                      onMouseEnter={() => setHoveredBuildingId(washroom.buildingId)}
+                      onFocus={() => setHoveredBuildingId(washroom.buildingId)}
+                      onBlur={() => setHoveredBuildingId(null)}
                     >
                       <span className={`rank rank-${washroom.rankLetter ?? "none"}`}>
                         {washroom.rankLetter ?? "—"}
