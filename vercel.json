@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run db:generate && npm run build --workspace=web",
+  "buildCommand": "npm run db:generate && npm run build --workspace=@ubc-access-map/shared && npm run build --workspace=web",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

@@ -10,7 +10,7 @@
     "dev": "npm run dev:api & npm run dev:web",
     "dev:web": "npm run dev --workspace=web",
     "dev:api": "npm run dev --workspace=api",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@ubc-access-map/shared && npm run build --workspace=api --workspace=web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p api/tsconfig.json",
     "test": "npm run test --workspaces --if-present",
